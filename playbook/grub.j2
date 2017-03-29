@@ -1,0 +1,8 @@
+default=0
+timeout=0
+hiddenmenu
+
+title Alpine Linux
+root (hd0)
+kernel /boot/virtgrsec alpine_dev=xvda1:ext4 modules=loop,squashfs,sd-mod,ext4 console=hvc0 pax_nouderef BOOT_IMAGE=/boot/vmlinuz-grsec
+initrd /boot/initramfs-grsec

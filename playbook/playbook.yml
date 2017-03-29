@@ -1,0 +1,39 @@
+
+---
+- hosts: alpine
+  
+  vars:
+    path_build: /tmp
+
+  become: yes
+
+  tasks:
+
+  - name: testing
+    command: echo testing
+  
+  - name: setup
+    shell: |
+      set -uex
+      mke2fs -t ext4 /dev/xvdf
+      wget --progress=dot:giga http://dl-cdn.alpinelinux.org/alpine/v3.5/releases/x86_64/alpine-xen-3.5.2-x86_64.iso
+      mkdir target
+      mkdir source
+      mount /dev/xvdf target
+      mount -o loop alpine-xen-3.5.2-x86_64.iso source
+      cp -av source/boot target
+      cp -av source/apks target
+      umount source
+      mkdir -p target/boot/grub
+    args:
+      chdir: '{{ path_build }}'
+
+  - template: 
+      src: grub.j2
+      dest: '{{ path_build }}/target/boot/grub/grub.conf'
+
+  - name: setup2
+    shell: |
+      ln -sf ./grub.conf target/boot/grub/menu.lst
+    args:
+      chdir: '{{ path_build }}'
