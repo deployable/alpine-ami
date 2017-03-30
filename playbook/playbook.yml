@@ -76,18 +76,26 @@
   #     src: grub.j2
   #     dest: '{{ path_build }}/target/boot/grub/grub.conf'
   
+  - shell: blkid -o value /dev/xvdf1
+    register: blkid_xvdf1
+
+  - debug: var=blkid_xvdf1.stdout_lines
+
+  - set_fact:
+      blk_uuid: '{{ blkid_xvdf1.stdout_lines[0] }}'
+
   - template: 
       src: extlinux.conf.j2
       dest: '{{ path_build }}/target/boot/extlinux.conf'
+
+  - get_url:    
+      url: http://dl-cdn.alpinelinux.org/alpine/v3.5/main/x86_64/apk-tools-static-2.6.8-r2.apk
+      dest: '{{ path_build }}/apk-tools-static-2.6.8-r2.apk'
 
   - copy: 
       src: chroot_run.sh
       dest: '{{ path_build }}/target/chroot_run.sh'
       mode: 0755
-
-  - get_url:    
-      url: http://dl-cdn.alpinelinux.org/alpine/v3.5/main/x86_64/apk-tools-static-2.6.8-r2.apk
-      dest: '{{ path_build }}/apk-tools-static-2.6.8-r2.apk'
 
   - set_fact:
       chroot_dir: '{{path_build}}/target'
@@ -122,7 +130,7 @@
       # Config
       echo "/dev/xvda1 / ext4 defaults 1 1" >> {{chroot_dir}}/etc/fstab
       echo "/dev/xvda2 none swap sw 0 0" >> {{chroot_dir}}/etc/fstab
-      echo "ipv6" >> {{chroot_dir}}/etc/modules
+      #echo "ipv6" >> {{chroot_dir}}/etc/modules
       echo "awsbuild" > {{chroot_dir}}/etc/hostname
       mkdir -p {{chroot_dir}}/admin/.ssh
       echo '{{pubkey}}' > {{chroot_dir}}/admin/.ssh/authorized_keys

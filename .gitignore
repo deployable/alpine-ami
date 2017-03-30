@@ -1,6 +1,7 @@
 # Packer build stuff
 packer_cache/
 ec2_amazon-ebssurrogate.pem
+output-virtualbox-iso/
 
 # Terraform test state
 terraform.tfstate
