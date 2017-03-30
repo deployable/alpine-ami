@@ -9,15 +9,15 @@
     "subnet_id"    : "subnet-85f0fcc3",
     "security_group_id": "sg-2b52e14f",
     "ssh_username" : "admin",
-    "ami_name"     : "packer-debian-alpine {{timestamp}}",
+    "ami_name"     : "alpine-0 {{timestamp}}",
     "ssh_timeout"  : "2m",
     "ami_virtualization_type": "hvm",
     "launch_block_device_mappings" : [
       {
-        "volume_type" : "gp2",
         "device_name" : "/dev/xvdf",
         "delete_on_termination" : false,
-        "volume_size" : 1
+        "volume_size" : 2,
+        "volume_type" : "gp2"
       }
     ],
     "ami_root_device": {

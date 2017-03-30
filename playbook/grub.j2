@@ -1,8 +1,10 @@
 default=0
 timeout=0
 hiddenmenu
+serial --unit=0 --speed=9600
+terminal --dumb --timeout=5 serial console
 
 title Alpine Linux
 root (hd0)
-kernel /boot/virtgrsec alpine_dev=xvda1:ext4 modules=loop,squashfs,sd-mod,ext4 console=hvc0 pax_nouderef BOOT_IMAGE=/boot/vmlinuz-grsec
+kernel /boot/virtgrsec alpine_dev=xvda1:ext4 modules=loop,squashfs,sd-mod,ext4 console=tty1  console=ttyS0 pax_nouderef BOOT_IMAGE=/boot/vmlinuz-grsec
 initrd /boot/initramfs-grsec

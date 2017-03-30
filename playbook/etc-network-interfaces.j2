@@ -1,0 +1,5 @@
+auto lo
+iface lo inet loopback
+iface eth0 inet dhcp
+iface eth0 inet6 manual
+  pre-up echo 1 > /proc/sys/net/ipv6/conf/eth0/accept_ra
