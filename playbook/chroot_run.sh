@@ -1,12 +1,38 @@
 #!/bin/sh
 set -uex
 
+#setup-disk -v -m sys -s 512 /dev/xvdf
+#echo "setup [$?]"
+fdisk -l /dev/xvdf
+echo "fdisk [$?]"
+
+
 echo 'http://dl-cdn.alpinelinux.org/alpine/v3.5/main
 http://dl-cdn.alpinelinux.org/alpine/v3.5/community' > /etc/apk/repositories
 
 # Setup
 apk update
-apk add --no-cache iproute2 iptables ip6tables iputils coreutils util-linux grep gzip jq curl  tar bash e2fsprogs openssh procps pstree gawk sed vim less python2 py2-pip sudo
+apk add --no-cache \
+  iproute2 iptables ip6tables iputils \
+  e2fsprogs coreutils util-linux syslinux procps pstree \
+  sudo grep gzip tar bash gawk sed less vim jq curl \
+  openssh python2 py2-pip 
+
+
+extlinux --install /boot
+echo "extlinux [$?]"
+
+#cp /etc/apk/repositories /etc/apk/repositories.normal
+#echo '@testing http://dl-cdn.alpinelinux.org/alpine/edge/testing' >> /etc/apk/repositories
+#apk update 
+#apk add grub@testing
+
+#grub-install /dev/xvdf
+
+#cp /etc/apk/repositories /etc/apk/repositories.testing
+#cp /etc/apk/repositories.normal /etc/apk/repositories
+#apk update
+
 
 # Boot
 rc-update add devfs sysinit
@@ -29,11 +55,9 @@ pip install awscli
 
 
 adduser -D -h /home/admin admin
-passwd -d $(uuid) admin
-passwd -d $(uuid) root
+pwd="$(uuidgen)"
+echo -e "$pwd\n$pwd\n" | passwd admin
+pwd="$(uuidgen)"
+echo -e "$pwd\n$pwd\n" | passwd root
 
 df -h
-
-setup-disk -v -m sys -s 512 /dev/xvdf
-
-fdisk -l /dev/xvdf

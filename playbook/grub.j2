@@ -6,5 +6,5 @@ terminal --dumb --timeout=5 serial console
 
 title Alpine Linux
 root (hd0)
-kernel /boot/virtgrsec alpine_dev=xvda1:ext4 modules=loop,squashfs,sd-mod,ext4 console=tty1  console=ttyS0 pax_nouderef BOOT_IMAGE=/boot/vmlinuz-grsec
+kernel /boot/virtgrsec alpine_dev=xvda2:ext4 modules=loop,squashfs,sd-mod,ext4 console=tty0 console=ttyS0,9600 pax_nouderef BOOT_IMAGE=/boot/vmlinuz-grsec
 initrd /boot/initramfs-grsec
