@@ -4,6 +4,8 @@
   
   vars:
     path_build: /tmp
+    dev_alpine: xvdf
+    file_iso: alpine-standard-3.5.2-x86_64.iso
 
   become: yes
 
@@ -15,16 +17,37 @@
   - name: setup
     shell: |
       set -uex
-      mke2fs -t ext4 /dev/xvdf
-      wget --progress=dot:giga http://dl-cdn.alpinelinux.org/alpine/v3.5/releases/x86_64/alpine-xen-3.5.2-x86_64.iso
+      mke2fs -t ext4 /dev/{{dev_alpine}}
       mkdir target
       mkdir source
-      mount /dev/xvdf target
-      mount -o loop alpine-xen-3.5.2-x86_64.iso source
+      mount /dev/{{dev_alpine}} target
+    args:
+      chdir: '{{ path_build }}'
+
+  - get_url:    
+      url: http://dl-cdn.alpinelinux.org/alpine/v3.5/releases/x86_64/{{file_iso}}
+      dest: '{{ path_build }}/{{file_iso}}'
+
+  - get_url:    
+      url: http://dl-cdn.alpinelinux.org/alpine/v3.5/main/x86_64/apk-tools-static-2.6.8-r2.apk
+      dest: '{{ path_build }}/apk-tools-static-2.6.8-r2.apk'
+
+  - name: extract
+    shell: |
+      set -uex
+      mount -o loop {{file_iso}} source
       cp -av source/boot target
       cp -av source/apks target
       umount source
+    args:
+      chdir: '{{ path_build }}'
+
+  - name: grub
+    shell: |
+      set -uex
       mkdir -p target/boot/grub
+      touch target/boot/grub/grub.conf
+      ln -sf target/boot/grub/grub.conf target/boot/grub/menu.lst
     args:
       chdir: '{{ path_build }}'
 
@@ -32,8 +55,29 @@
       src: grub.j2
       dest: '{{ path_build }}/target/boot/grub/grub.conf'
 
-  - name: setup2
+  - copy: 
+      src: chroot_run.sh
+      dest: '{{ path_build }}/target/chroot_run.sh'
+      mode: 0755
+
+  - set_fact:
+      chroot_dir: '{{ path_build }}/target'
+
+  - name: chroot
     shell: |
-      ln -sf ./grub.conf target/boot/grub/menu.lst
+      set -uex
+      cp /etc/resolv.conf {{chroot_dir}}/etc/
+      tar -xzf apk-tools-static-2.6.8.apk
+      ./sbin/apk.static -X http://dl-cdn.alpinelinux.org/alpine/v3.5/main -U --allow-untrusted --root {{chroot_dir}} --initdb add alpine-base
+      mount -t proc none {{chroot_dir}}/proc
+      mount -o bind /sys {{chroot_dir}}/sys
+      mount -o bind /dev ${chroot_dir}/dev
+      chroot ${chroot_dir} chroot_run.sh
     args:
       chdir: '{{ path_build }}'
+
+# wget 
+# apk update
+# apk add iproute2 grep gzip jq aiputils wget curl coreutils tar bash e2fsprogs procps pstree psutils gawk sed vim less groff python2 py2-pip
+# pip install --upgrade pip
+# pip install awscli

@@ -1,0 +1,65 @@
+{
+  "builders": [{
+    "type"         : "virtualbox-iso",
+    "guest_os_type": "Ubuntu_64",
+    "iso_url"      : "http://dl-cdn.alpinelinux.org/alpine/v3.5/releases/x86_64/alpine-standard-3.5.2-x86_64.iso",
+    "iso_checksum_type": "sha256",
+    "iso_checksum" : "c955c26431c877527024d94d1ba6495b87fddac186df16c404f7b15ea61f443b",
+    "ssh_username" : "packer",
+    "ssh_password" : "packer",
+    "shutdown_command": "echo 'packer' | sudo -S shutdown -P now",
+    "boot_wait": "10s",
+    "boot_command": [
+      "<enter>",
+      "<wait10>",
+      "root<enter>",
+      "adduser -D -h /home/packer packer<enter>",
+      "passwd -d packer packer<enter>",
+      "apk update<enter>",
+      "apk add openssh<enter>",
+      "/etc/init.d/sshd start<enter>",
+      "setup-alpine<enter>",
+      "us<enter>",
+      "us<enter>",
+      "awsbuild<enter>",
+      "<enter>",
+      "<enter>",
+      "<enter>",
+      "<wait5>",
+      "!@#$!#@$!@qerqgfh<enter>",
+      "!@#$!#@$!@qerqgfh<enter>",
+      "<enter>",
+      "<enter>",
+      "1<enter>",
+      "<enter>",
+      "<enter>",
+      "sda<enter>",
+      "sys<enter>",
+      "<wait5>",
+      "y<enter>",
+      "<wait10>",
+      "<wait10>",
+      "<wait10>",
+      "<wait10>",
+      "<wait10>",
+      "<wait10>",
+      "<wait10>",
+      "<wait10>",
+      "<wait10>",
+      "reboot<enter>",
+      "<wait10>"
+    ]
+  }],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "set -uex",
+        "apk update",
+        "apk add iproute2 grep gzip jq iputils curl coreutils tar bash e2fsprogs procps pstree gawk sed vim less python2 py2-pip",
+        "pip install --upgrade pip",
+        "pip install awscli"
+      ]
+    }
+  ]
+}
