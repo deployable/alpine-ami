@@ -11,14 +11,5 @@ resource "aws_instance" "example" {
   instance_type = "t2.nano"
   subnet_id     = "subnet-85f0fcc3"
   key_name      = "mattapsydney"
-}
-
-resource "aws_network_interface" "docker" {
-  subnet_id       = "subnet-85f0fcc3"
-#  private_ips     = [""]
-  security_groups = ["sg-2b52e14f"]
-  attachment {
-    instance     = "${aws_instance.example.id}"
-    device_index = 1
-  }
+  vpc_security_group_ids  = ["sg-2b52e14f"]
 }

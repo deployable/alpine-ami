@@ -1,2 +1,7 @@
+# Packer build stuff
 packer_cache/
 ec2_amazon-ebssurrogate.pem
+
+# Terraform test state
+terraform.tfstate
+terraform.tfstate.backup
