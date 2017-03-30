@@ -1,9 +1,8 @@
-PROMPT 0
 SERIAL 0 9600
 TIMEOUT 1
-LABEL grsec
-MENU DEFAULT
-MENU LABEL Alpine grsec
-LINUX /boot/vmlinuz-grsec
-INITRD /boot/initramfs-grsec
-APPEND BOOT_IMAGE=/boot/vmlinuz-grsec alpine_dev=xvda1:ext4 modules=loop,squashfs,sd-mod,ext4 console=tty0 console=ttyS0,9600 pax_nouderef quiet
+DEFAULT alpine
+LABEL alpine
+ SAY Booting alpine
+ LINUX /boot/vmlinuz-grsec
+ INITRD /boot/initramfs-grsec
+ APPEND initrd=/boot/initramfs-grsec alpine_dev=xvda1:ext4 modules=loop,squashfs,sd-mod,ext4 console=tty1 console=ttyS0,9600 pax_nouderef

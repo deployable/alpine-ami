@@ -5,7 +5,7 @@
   vars:
     path_build: /tmp
     dev_alpine: xvdf
-    file_iso: alpine-virt-3.5.2-x86_64.iso
+    file_iso: alpine-standard-3.5.2-x86_64.iso
     pubkey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCqGxLbtArl7UE1noY1tNpRxxQUFCTiSUzFBtT/TYvb8ZWn+wy6dgM5yh6jWQl/0ZCLgqF8tNZCemJ64KfL1+5QZAa027+2YqJuSqO0kYZk6fJ7o67P+zEny27NbAnERBLoTde0btGVd1ZneDTCfLROmbTJGKA9EyZ98CyCfBJNqYRllsNrqOfAKegxwSrRNYepuq3eGWKMfTvRECHq0XdTRdcQ7HpF+rZUPqnWwOv8zQZ8kWwepiqk5dQryfusvkj6EZHdW8ftc2ExOCCY9Mo/Zi2ggWvVlIdCRuV8X/7Ki4qVVohOpNFbuJr8HRDSq0q3kxkVdxRQkAgXLG1+tM2DaRD22F1r7KJEncU1K3Gq0CDxYQkfjQNcyRsn3/mJ3dphS0WskuL5xHxex1O3XTIlfqI0l8dSxdscDGtXiwF2+fccxCzOzovGauzGWrtCNVwNkepPt632AkGna379Qpms6HbZGnbr1LHA36OZ6xAY8w8RpkEFG34LVcH0Dfotsp8= admin@alpine
   become: yes
 
@@ -62,16 +62,16 @@
     args:
       chdir: '{{ path_build }}'
 
-  - name: grub
-    shell: |
-      set -uex
-      mkdir -p target/boot/grub
-      touch target/boot/grub/grub.conf
-      cd target/boot/grub/
-      ln -sf grub.conf menu.lst
-    args:
-      chdir: '{{ path_build }}'
-
+  # - name: grub
+  #   shell: |
+  #     set -uex
+  #     mkdir -p target/boot/grub
+  #     touch target/boot/grub/grub.conf
+  #     cd target/boot/grub/
+  #     ln -sf grub.conf menu.lst
+  #   args:
+  #     chdir: '{{ path_build }}'
+  #
   # - template: 
   #     src: grub.j2
   #     dest: '{{ path_build }}/target/boot/grub/grub.conf'
@@ -90,7 +90,7 @@
       dest: '{{ path_build }}/apk-tools-static-2.6.8-r2.apk'
 
   - set_fact:
-      chroot_dir: '{{ path_build }}/target'
+      chroot_dir: '{{path_build}}/target'
 
   - name: chroot
     shell: |
@@ -102,15 +102,6 @@
       mkdir {{chroot_dir}}/proc/
       mkdir {{chroot_dir}}/sys/
       mkdir {{chroot_dir}}/dev/
-      echo -e "/dev/xvda2 / ext4 defaults 1 1" >> {{chroot_dir}}/etc/fstab
-      echo -e "/dev/xvda3 none swap sw 0 0" >> {{chroot_dir}}/etc/fstab
-      echo "ipv6" >> {{chroot_dir}}/etc/modules
-      echo "awsbuild" > {{chroot_dir}}/etc/hostname
-      mkdir -p {{chroot_dir}}/admin/.ssh
-      echo '{{pubkey}}' > {{chroot_dir}}/admin/.ssh/authorized_keys
-      cp /etc/resolv.conf {{chroot_dir}}/etc/
-      tar -xzf apk-tools-static-2.6.8-r2.apk
-      ./sbin/apk.static -X http://dl-cdn.alpinelinux.org/alpine/v3.5/main -U --allow-untrusted --root {{chroot_dir}} --initdb add alpine-base alpine-conf
       mount -t proc none {{chroot_dir}}/proc
       mount -o bind /sys {{chroot_dir}}/sys
       mknod -m 666 {{chroot_dir}}/dev/full c 1 7
@@ -127,9 +118,21 @@
       rm -f {{chroot_dir}}/dev/null
       mknod -m 666 {{chroot_dir}}/dev/null c 1 3
       mount -o bind /dev {{chroot_dir}}/dev
+
+      # Config
+      echo "/dev/xvda1 / ext4 defaults 1 1" >> {{chroot_dir}}/etc/fstab
+      echo "/dev/xvda2 none swap sw 0 0" >> {{chroot_dir}}/etc/fstab
+      echo "ipv6" >> {{chroot_dir}}/etc/modules
+      echo "awsbuild" > {{chroot_dir}}/etc/hostname
+      mkdir -p {{chroot_dir}}/admin/.ssh
+      echo '{{pubkey}}' > {{chroot_dir}}/admin/.ssh/authorized_keys
+      cp /etc/resolv.conf {{chroot_dir}}/etc/
+      tar -xzf apk-tools-static-2.6.8-r2.apk
+      ./sbin/apk.static -X http://dl-cdn.alpinelinux.org/alpine/v3.5/main -U --allow-untrusted --root {{chroot_dir}} --initdb add alpine-base alpine-conf syslinux 
+
       chroot {{chroot_dir}} /chroot_run.sh
     args:
-      chdir: '{{ path_build }}'
+      chdir: '{{path_build}}'
 
   - template:
       src: ./etc-hosts.j2
