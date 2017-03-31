@@ -1,5 +1,8 @@
 auto lo
 iface lo inet loopback
-iface eth0 inet dhcp
-iface eth0 inet6 manual
-  pre-up echo 1 > /proc/sys/net/ipv6/conf/eth0/accept_ra
+#iface eth0 inet dhcp
+iface eth0 inet static
+  address 172.30.1.201
+  netmask 255.255.255.0
+  gateway 172.30.1.1
+iface eth1 inet dhcp
