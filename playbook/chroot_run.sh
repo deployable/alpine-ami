@@ -45,6 +45,7 @@ rc-update add hostname boot
 rc-update add bootmisc boot
 rc-update add syslog boot
 rc-update add sshd boot
+rc-update add netdebug boot
 rc-update add mount-ro shutdown
 rc-update add killprocs shutdown
 rc-update add savecache shutdown
@@ -56,7 +57,7 @@ pip install awscli
 
 adduser -D -h /home/admin admin
 pwd="$(uuidgen)"
-echo -e "$pwd\n$pwd\n" | passwd admin
+echo -e "admin\nadmin\n" | passwd admin
 pwd="$(uuidgen)"
 echo -e "$pwd\n$pwd\n" | passwd root
 

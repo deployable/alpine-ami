@@ -12,4 +12,5 @@ resource "aws_instance" "example" {
   subnet_id     = "subnet-85f0fcc3"
   key_name      = "mattapsydney"
   vpc_security_group_ids  = ["sg-2b52e14f"]
+  private_ip = "172.30.1.201"
 }

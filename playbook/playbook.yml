@@ -100,18 +100,17 @@
   - set_fact:
       chroot_dir: '{{path_build}}/target'
 
-  - name: chroot
+  - name: chroot setup
     shell: |
       set -uex
       mkdir {{chroot_dir}}/root/
       mkdir {{chroot_dir}}/etc/
       mkdir {{chroot_dir}}/etc/apk
       mkdir {{chroot_dir}}/etc/network
+      mkdir {{chroot_dir}}/etc/init.d
       mkdir {{chroot_dir}}/proc/
       mkdir {{chroot_dir}}/sys/
       mkdir {{chroot_dir}}/dev/
-      mount -t proc none {{chroot_dir}}/proc
-      mount -o bind /sys {{chroot_dir}}/sys
       mknod -m 666 {{chroot_dir}}/dev/full c 1 7
       mknod -m 666 {{chroot_dir}}/dev/ptmx c 5 2
       mknod -m 644 {{chroot_dir}}/dev/random c 1 8
@@ -125,15 +124,26 @@
       mknod -m 666 {{chroot_dir}}/dev/xvda4 b 8 4
       rm -f {{chroot_dir}}/dev/null
       mknod -m 666 {{chroot_dir}}/dev/null c 1 3
+      mount -t proc none {{chroot_dir}}/proc
+      mount -o bind /sys {{chroot_dir}}/sys
       mount -o bind /dev {{chroot_dir}}/dev
+    args:
+      chdir: '{{path_build}}'
 
+  - copy:
+      src: ./etc-init.d-network-debug
+      dest: '{{chroot_dir}}/etc/init.d/netdebug'
+      mode: 0755
+
+  - name: chroot config
+    shell: |
       # Config
       echo "/dev/xvda1 / ext4 defaults 1 1" >> {{chroot_dir}}/etc/fstab
       echo "/dev/xvda2 none swap sw 0 0" >> {{chroot_dir}}/etc/fstab
       #echo "ipv6" >> {{chroot_dir}}/etc/modules
       echo "awsbuild" > {{chroot_dir}}/etc/hostname
-      mkdir -p {{chroot_dir}}/admin/.ssh
-      echo '{{pubkey}}' > {{chroot_dir}}/admin/.ssh/authorized_keys
+      mkdir -p {{chroot_dir}}/home/admin/.ssh
+      echo '{{pubkey}}' > {{chroot_dir}}/home/admin/.ssh/authorized_keys
       cp /etc/resolv.conf {{chroot_dir}}/etc/
       tar -xzf apk-tools-static-2.6.8-r2.apk
       ./sbin/apk.static -X http://dl-cdn.alpinelinux.org/alpine/v3.5/main -U --allow-untrusted --root {{chroot_dir}} --initdb add alpine-base alpine-conf syslinux 
