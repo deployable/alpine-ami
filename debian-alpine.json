@@ -28,8 +28,8 @@
   }],
   "provisioners": [{
     "type": "ansible",
-    "playbook_file": "./playbook/playbook.yml",
+    "playbook_file": "./playbook/playbook_aws.yml",
     "groups": "alpine",
-    "extra_arguments": "-vv"
+    "extra_arguments": ["-vv", "-t", "aws"]
   }]
 }

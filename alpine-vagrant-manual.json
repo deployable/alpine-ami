@@ -1,0 +1,47 @@
+{
+  "builders": [{
+    "type"         : "virtualbox-iso",
+    "guest_os_type": "Ubuntu_64",
+    
+    "iso_url"      : "http://dl-cdn.alpinelinux.org/alpine/v3.5/releases/x86_64/alpine-standard-3.5.2-x86_64.iso",
+    "iso_checksum_type": "sha256",
+    "iso_checksum" : "c955c26431c877527024d94d1ba6495b87fddac186df16c404f7b15ea61f443b",
+
+    "ssh_username" : "admin",
+    "ssh_password" : "24d94d1ba52c",
+
+    "post_shutdown_delay": "30s",
+    "boot_wait": "10s",
+    "boot_command": [
+      "<enter>",
+      "<wait10>",
+      "root<enter>",
+      "/sbin/setup-interfaces<enter>",
+      "<enter>",
+      "dhcp<enter>",
+      "no<enter>",
+      "/etc/init.d/networking start<enter>",
+      "echo 'http://dl-cdn.alpinelinux.org/alpine/v3.5/main<enter>http://dl-cdn.alpinelinux.org/alpine/v3.5/community' > /etc/apk/repositories<enter>",
+      "apk update<enter>",
+      "<wait5>",
+      "apk add openssh sudo python tar gzip<enter>",
+      "<wait5>",
+      "adduser -D -h /home/admin admin<enter>",
+      "echo '24d94d1ba52c<enter>24d94d1ba52c' | passwd admin<enter>",
+      "echo 'admin ALL = NOPASSWD: ALL' >> /etc/sudoers<enter>",
+      "/etc/init.d/sshd start<enter>",
+      "ps -ef | grep ssh<enter>",
+      "netstat -anp | grep ssh<enter>",
+      "su - admin -c 'sudo echo test'<enter>",
+      "<wait10>"
+    ]
+  }],
+  "provisioners": [
+    {
+      "type": "ansible",
+      "playbook_file": "./playbook/playbook_vbox.yml",
+      "groups": "alpine",
+      "extra_arguments": [ "-vv", "-t", "vbox" ]
+    }
+  ]
+}

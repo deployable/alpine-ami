@@ -1,0 +1,16 @@
+
+---
+- hosts: alpine
+  
+  vars:
+    path_build: /tmp
+    dev_alpine: xvdf
+    dev_alpine_eventual: xvda
+    dev_alpine_size: 100%
+    hostname: alpaws
+    user_base: admin
+
+  become: yes
+
+  tasks:
+    - include: alpine_build.yml
