@@ -1,14 +1,24 @@
 # Alpine Linux AMI Build
 
 Build an [Alpine Linux](https://www.alpinelinux.org) EC2 AMI with 
- [Packer](https://www.packer.io) and [Ansible](https://www.ansible.com)
+ [Packer](https://www.packer.io) and [Ansible](https://www.ansible.com).
 
+
+## Setup
+
+The build requires `packer` and `ansible-playbook` to be installed.
+On a mac, use [brew](https://brew.sh).
+```shell
+brew install packer
+brew install ansible
+```
+
+On Linux, [download](https://www.packer.io/downloads.html) or check your package manager.
+Ansible is available via `pip install ansible` or on epel for RHEL and `ppa:ansible/ansible` for Ubuntu.
 
 ## Build AMI
 
-```
-brew install packer
-brew install ansible
+```shell
 git clone https://github.com/deployable/alpine-ami && cd alpine-ami
 vi debian-alpine.json # set or delete `subnet_id` and `security_group_id`
 ./make.sh
@@ -21,7 +31,7 @@ whatever public ssh key you want to use.
 
 ### VirtualBox OVF
 
-The same build can be applied to VirtualBox to produce an OVF appliance
+The same build can be applied to VirtualBox to produce an OVF appliance.
 
 ```
 ./make.sh build_virtualbox
@@ -32,7 +42,7 @@ _Note:_ not booting at the moment
 ## Test
 
 After building you can bring up the AMI on a nano instance via an included
- [Terraform](https://terraform.io) config
+ [Terraform](https://terraform.io) config.
 
 ```
 cd test/
