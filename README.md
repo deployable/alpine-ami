@@ -12,7 +12,7 @@ brew install ansible
 ./make.sh
 ```
 The build doesn't pick up the default ssh public key from AWS at the moment so the 
-ansible `pubkey` variable is statically configured. It will need to be mofied to 
+ansible `pubkey` variable is statically configured. It will need to be modified to 
 whatever public ssh key you want to use. 
 
 
@@ -33,11 +33,10 @@ After building you can bring up the ami on a nano instance via an included
 
 ```
 cd test/
-terraform apply -var test_ami={{ami_id}}
-ssh -i ~/.ssh/id_rsa_alpine admin@{{ip}}
+terraform apply -var test_ami=[ami_id]
+ssh -i ~/.ssh/id_rsa_alpine admin@[instance_ip]
 ```
 
 ### About
 
-Matt Hoyle 
-code aatt deployable.co
+Matt Hoyle - code aatt deployable.co
