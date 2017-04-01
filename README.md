@@ -9,9 +9,11 @@ Build an [Alpine Linux](https://www.alpinelinux.org) EC2 AMI with
 ```
 brew install packer
 brew install ansible
+git clone https://github.com/deployable/alpine-ami && cd alpine-ami
 ./make.sh
 ```
-The build doesn't pick up the default ssh public key from AWS at the moment so the 
+
+_note_ The build doesn't pick up the default ssh public key from AWS at the moment so the 
 ansible `pubkey` variable is statically configured. It will need to be modified to 
 whatever public ssh key you want to use. 
 
