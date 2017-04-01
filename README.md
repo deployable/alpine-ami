@@ -13,7 +13,7 @@ git clone https://github.com/deployable/alpine-ami && cd alpine-ami
 ./make.sh
 ```
 
-_note_ The build doesn't pick up the default ssh public key from AWS at the moment so the 
+_Note:_ The build doesn't pick up the default ssh public key from AWS at the moment so the 
 ansible `pubkey` variable is statically configured. It will need to be modified to 
 whatever public ssh key you want to use. 
 
@@ -25,7 +25,7 @@ The same build can be applied to VirtualBox to produce an OVF appliance
 ```
 ./make.sh build_virtualbox
 ```
-_note_ not booting at the moment
+_Note:_ not booting at the moment
 
 
 ## Test
