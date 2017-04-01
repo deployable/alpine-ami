@@ -10,6 +10,7 @@ Build an [Alpine Linux](https://www.alpinelinux.org) EC2 AMI with
 brew install packer
 brew install ansible
 git clone https://github.com/deployable/alpine-ami && cd alpine-ami
+vi debian-alpine.json # set or delete `subnet_id` and `security_group_id`
 ./make.sh
 ```
 
@@ -35,7 +36,7 @@ After building you can bring up the AMI on a nano instance via an included
 
 ```
 cd test/
-terraform apply -var test_ami=[ami_id]
+terraform apply -var test_ami=ami-[id]
 ssh -i ~/.ssh/id_rsa_alpine admin@[instance_ip]
 ```
 
