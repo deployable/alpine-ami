@@ -1,8 +1,6 @@
 {
   "builders": [{
     "type"         : "amazon-ebssurrogate",
-    "access_key"   : "{{user `aws_access_key`}}",
-    "secret_key"   : "{{user `aws_secret_key`}}",
     "region"       : "ap-southeast-2",
     "source_ami"   : "ami-881317eb",
     "instance_type": "t2.nano",
@@ -16,7 +14,7 @@
       {
         "device_name" : "/dev/xvdf",
         "delete_on_termination" : false,
-        "volume_size" : 1,
+        "volume_size" : 2,
         "volume_type" : "gp2"
       }
     ],

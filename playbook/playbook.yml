@@ -37,9 +37,9 @@
     shell: |
       set -uex
       parted /dev/{{dev_alpine}} mktable msdos
-      parted /dev/{{dev_alpine}} -sa optimal -- mkpart primary ext4 0% 700MiB
+      parted /dev/{{dev_alpine}} -sa optimal -- mkpart primary ext4 0% 1500MiB
       parted /dev/{{dev_alpine}} set 1 boot on
-      parted /dev/{{dev_alpine}} -sa optimal -- mkpart primary linux-swap 700.1MiB 100%
+      parted /dev/{{dev_alpine}} -sa optimal -- mkpart primary linux-swap 1500.0001MiB 100%
       parted /dev/{{dev_alpine}} print list
       mkdir target
       mkdir source
@@ -58,6 +58,9 @@
       set -uex
       mount -o loop {{file_iso}} source
       cp -av source/boot target
+      rm -f target/boot/modloop-grsec
+      rm -f target/boot/modloop-virtgrsec
+      rm -rf target/boot/syslinux
       umount source
     args:
       chdir: '{{ path_build }}'
@@ -90,6 +93,7 @@
 
   - get_url:    
       url: http://dl-cdn.alpinelinux.org/alpine/v3.5/main/x86_64/apk-tools-static-2.6.8-r2.apk
+      #url: http://dl-cdn.alpinelinux.org/alpine/v3.4/main/x86_64/apk-tools-static-2.6.7-r0.apk
       dest: '{{ path_build }}/apk-tools-static-2.6.8-r2.apk'
 
   - copy: 
@@ -140,14 +144,14 @@
       # Config
       echo "/dev/xvda1 / ext4 defaults 1 1" >> {{chroot_dir}}/etc/fstab
       echo "/dev/xvda2 none swap sw 0 0" >> {{chroot_dir}}/etc/fstab
-      #echo "ipv6" >> {{chroot_dir}}/etc/modules
+      echo "ipv6" >> {{chroot_dir}}/etc/modules
       echo "awsbuild" > {{chroot_dir}}/etc/hostname
       mkdir -p {{chroot_dir}}/home/admin/.ssh
       echo '{{pubkey}}' > {{chroot_dir}}/home/admin/.ssh/authorized_keys
       cp /etc/resolv.conf {{chroot_dir}}/etc/
       tar -xzf apk-tools-static-2.6.8-r2.apk
       ./sbin/apk.static -X http://dl-cdn.alpinelinux.org/alpine/v3.5/main -U --allow-untrusted --root {{chroot_dir}} --initdb add alpine-base alpine-conf syslinux 
-
+      echo alpine-ec2 > {{chroot_dir}}/etc/motd
       chroot {{chroot_dir}} /chroot_run.sh
     args:
       chdir: '{{path_build}}'
@@ -159,6 +163,11 @@
   - template:
       src: ./etc-network-interfaces.j2
       dest: '{{chroot_dir}}/etc/network/interfaces'
+
+  - lineinfile:
+      dest: '{{chroot_dir}}/etc/sudoers'
+#      regex: 'admin ALL = NOPASSWD: ALL'
+      line: 'admin ALL = NOPASSWD: ALL'
 
 # wget 
 # apk update
