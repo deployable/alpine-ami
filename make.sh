@@ -9,12 +9,6 @@ if [ -n "${DEBUG:-}" ]; then
   PACKER_ARGS="-debug"
 fi
 
-build_virtualbox_manual(){
-  pkill -f 'packer build alpine-vagrant-manual.json'
-  rm -rf output-virtualbox-iso/
-  packer build $PACKER_ARGS alpine-vagrant-manual.json
-}
-
 build_virtualbox(){
   pkill -f 'packer build alpine-vagrant.json'
   rm -rf output-virtualbox-iso/
