@@ -1,0 +1,258 @@
+---
+
+# Varibles you might want to change
+
+- set_fact:
+    version_major: 3
+    version_minor: 5
+    version_patch: 2
+  tags: ["always"]
+
+- set_fact:
+    version: '{{version_major}}.{{version_minor}}.{{version_patch}}'
+  tags: ["always"]
+
+- set_fact:
+    version_major_minor: '{{version_major}}.{{version_minor}}'
+  tags: ["always"]
+
+- set_fact:
+    pubkey: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCqGxLbtArl7UE1noY1tNpRxxQUFCTiSUzFBtT/TYvb8ZWn+wy6dgM5yh6jWQl/0ZCLgqF8tNZCemJ64KfL1+5QZAa027+2YqJuSqO0kYZk6fJ7o67P+zEny27NbAnERBLoTde0btGVd1ZneDTCfLROmbTJGKA9EyZ98CyCfBJNqYRllsNrqOfAKegxwSrRNYepuq3eGWKMfTvRECHq0XdTRdcQ7HpF+rZUPqnWwOv8zQZ8kWwepiqk5dQryfusvkj6EZHdW8ftc2ExOCCY9Mo/Zi2ggWvVlIdCRuV8X/7Ki4qVVohOpNFbuJr8HRDSq0q3kxkVdxRQkAgXLG1+tM2DaRD22F1r7KJEncU1K3Gq0CDxYQkfjQNcyRsn3/mJ3dphS0WskuL5xHxex1O3XTIlfqI0l8dSxdscDGtXiwF2+fccxCzOzovGauzGWrtCNVwNkepPt632AkGna379Qpms6HbZGnbr1LHA36OZ6xAY8w8RpkEFG34LVcH0Dfotsp8= admin@alpine'
+  tags: ["always"]
+
+- set_fact:
+    file_iso: alpine-standard-{{version}}-x86_64.iso
+  tags: ["always"]
+
+# Variables based on the tags (need to be defaulted)
+
+- set_fact:
+    is_aws: false
+    is_vbox: false
+    is_surrogate: false
+  tags: ["always"]
+
+- set_fact:
+    is_aws: true
+  tags: ["aws"]
+
+- set_fact:
+    is_vbox: true
+  tags: ["vbox"]
+
+- set_fact:
+    is_surrogate: true
+  tags: ["surrogate", "aws"]
+
+
+
+# Steps
+
+- name: "add install deps"
+  tags: ["vbox"]
+  apk:
+    name: e2fsprogs, syslinux, parted
+
+- name: setup
+  tags: ["surrogate","aws","vbox"]
+  shell: |
+    set -uex
+    parted /dev/{{dev_alpine}} mktable msdos
+    parted /dev/{{dev_alpine}} -sa optimal -- mkpart primary ext4 0% 1500MiB
+    parted /dev/{{dev_alpine}} set 1 boot on
+    parted /dev/{{dev_alpine}} -sa optimal -- mkpart primary linux-swap 1500.0001MiB {{dev_alpine_size}}
+    parted /dev/{{dev_alpine}} print list
+    mkdir target
+    mkdir source
+    mke2fs -t ext4 /dev/{{dev_alpine}}1
+    mkswap /dev/{{dev_alpine}}2
+    mount -t ext4 /dev/{{dev_alpine}}1 target
+  args:
+    chdir: '{{ path_build }}'
+
+- name: 'get release iso for debian'
+  tags: ["surrogate","aws"]
+  get_url:    
+    url: http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/releases/x86_64/{{file_iso}}
+    dest: '{{ path_build }}/{{file_iso}}'
+
+- name: extract iso
+  shell: |
+    set -uex
+    mount -o loop {{file_iso}} source
+    cp -av source/boot target
+    rm -f target/boot/modloop-grsec
+    rm -f target/boot/modloop-virtgrsec
+    rm -rf target/boot/syslinux
+    umount source
+  args:
+    chdir: '{{ path_build }}'
+  tags: ["surrogate","aws"]
+
+- shell: 'blkid -o value /dev/{{dev_alpine}}1'
+  register: blkid_dev
+  tags: ["surrogate","aws","vbox"]
+
+- debug: var=blkid_dev.stdout_lines
+  tags: ["surrogate","aws","vbox"]
+
+- set_fact:
+    blk_uuid: '{{ blkid_dev.stdout_lines[0] }}'
+  tags: ["surrogate","aws","vbox"]
+
+# Chroot
+
+- set_fact:
+    chroot_dir: '{{path_build}}/target'
+  tags: ["surrogate","aws","vbox"]
+
+- get_url:    
+    url: http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/releases/x86_64/alpine-minirootfs-{{version}}-x86_64.tar.gz
+    dest: '{{ path_build }}/alpine-minirootfs-3.5.2-x86_64.tar.gz'
+  tags: ["surrogate","aws","vbox"]
+
+- unarchive:
+    src: '{{ path_build }}/alpine-minirootfs-3.5.2-x86_64.tar.gz'
+    dest: '{{ chroot_dir }}'
+
+
+- copy: 
+    src: chroot_run.sh
+    dest: '{{chroot_dir}}/chroot_run.sh'
+    mode: 0755
+  tags: ["surrogate","aws","vbox"]
+
+- file:
+    path: '{{chroot_dir}}{{item}}'
+    state: directory
+    mode: 0755
+  with_items:
+    - '/root'
+    - '/boot'
+    - '/etc/network'
+    - '/etc/init.d'
+    - '/etc/apk'
+    - '/proc'
+    - '/sys'
+    - '/dev'
+  tags: ["surrogate","aws","vbox"]
+
+- name: system setup for chroot
+  tags: ["surrogate","aws","vbox"]
+  shell: |
+    set -ue
+    mount -t proc none {{chroot_dir}}/proc
+    mount -o bind /sys {{chroot_dir}}/sys
+    mount -o bind /dev {{chroot_dir}}/dev
+  args:
+    chdir: '{{path_build}}'
+
+- name: copy etc-init.d-network-debug /etc/init.d/netdebug
+  copy:
+    src: ./etc-init.d-network-debug
+    dest: '{{chroot_dir}}/etc/init.d/netdebug'
+    mode: 0755
+  tags: ["surrogate","aws","vbox"]
+
+- name: 'template /etc/apk/repositories etc-apk-repositories.j2'
+  tags: ["surrogate","aws","vbox"]
+  template: 
+    src: etc-apk-repositories.j2
+    dest: '{{chroot_dir}}/etc/apk/repositories'
+
+- name: chroot system setup
+  tags: ["surrogate","aws","vbox"]
+  shell: |
+    set -ue
+    # Config
+    echo "ipv6" >> {{chroot_dir}}/etc/modules
+    echo "{{hostname}}" > {{chroot_dir}}/etc/hostname
+    mkdir -p {{chroot_dir}}/home/{{user_base}}/.ssh
+    echo '{{pubkey}}' > {{chroot_dir}}/home/{{user_base}}/.ssh/authorized_keys
+    cp /etc/resolv.conf {{chroot_dir}}/etc/
+    echo 'alpine virt' > {{chroot_dir}}/etc/motd
+  args:
+    chdir: '{{path_build}}'
+
+- name: get apk statuc
+  tags: ["surrogate","aws","vbox"]
+  get_url:    
+    url: http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/main/x86_64/apk-tools-static-2.6.8-r2.apk
+    dest: '{{ path_build }}/apk-tools-static-2.6.8-r2.tgz'
+
+- name: extract apk statuc
+  tags: ["surrogate","aws","vbox"]
+  unarchive:
+    src: '{{path_build}}/apk-tools-static-2.6.8-r2.tgz'
+    dest: '{{path_build}}'
+    remote_src: yes
+
+- name: chroot system apk install
+  tags: ["surrogate","aws","vbox"]
+  command: '{{path_build}}/sbin/apk.static -X http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/main -U --allow-untrusted --root {{chroot_dir}} --initdb add alpine-base linux-virtgrsec iproute2 iptables ip6tables iputils e2fsprogs coreutils util-linux syslinux sudo bash openssh dhcpcd'
+
+- name: remove kernel bits
+  tags: ["surrogate","aws","vbox"]
+  file:
+    path: '{{item}}'
+    state: absent
+  with_items:
+    - '{{chroot_dir}}/boot/libutil.c32'
+    - '{{chroot_dir}}/boot/mboot.c32'
+    - '{{chroot_dir}}/boot/menu.c32'
+    - '{{chroot_dir}}/boot/vesamenu.c32'
+    - '{{chroot_dir}}/boot/extlinux.conf.old'
+
+- name: 'template /etc/fstab etc-fstab.j2'
+  tags: ["surrogate","aws","vbox"]
+  template: 
+    src: etc-fstab.j2
+    dest: '{{chroot_dir}}/etc/fstab'
+
+- name: 'template /boot/extlinux.conf extlinux.conf.j2'
+  tags: ["surrogate","aws","vbox"]
+  template: 
+    src: extlinux.conf.j2
+    dest: '{{chroot_dir}}/boot/extlinux.conf'
+
+- name: 'extlinux for chroot'
+  tags: ["vbox"]
+  command: extlinux --install {{chroot_dir}}/boot
+
+- name: 'extlinux for chroot'
+  tags: ["surrogate","aws"]
+  command: chroot {{chroot_dir}} extlinux --install /boot
+
+- name: chroot
+  tags: ["surrogate","aws","vbox"]
+  command: chroot {{chroot_dir}} /chroot_run.sh
+  args:
+    chdir: '{{path_build}}'
+
+- name: 'template /etc/hosts etc-hosts.j2'
+  tags: ["surrogate","aws","vbox"]
+  template:
+    src: ./etc-hosts.j2
+    dest: '{{chroot_dir}}/etc/hosts'
+
+- name: 'template /etc/network/interfaces etc-network-interfaces.j2'
+  tags: ["surrogate","aws","vbox"]
+  template:
+    src: ./etc-network-interfaces.j2
+    dest: '{{chroot_dir}}/etc/network/interfaces'
+
+- name: 'lineinfile /etc/sudoers'
+  tags: ["surrogate","aws","vbox"]
+  lineinfile:
+    dest: '{{chroot_dir}}/etc/sudoers'
+    line: '{{user_base}} ALL = NOPASSWD: ALL'
+
+- name: 'shutdown vbox'
+  tags: ["vbox"]
+  command: halt -d 10
+
+# wget 
+# apk update
+# apk add iproute2 grep gzip jq aiputils wget curl coreutils tar bash e2fsprogs procps pstree psutils gawk sed vim less groff python2 py2-pip
+# pip install --upgrade pip
+# pip install awscli

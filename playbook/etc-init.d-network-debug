@@ -4,25 +4,24 @@ description="Debugs network setup"
 
 depend() {
         need net
-        keyword -prefix -networkin
+        keyword -prefix -networking
 }
 
 start() {
       ebegin "Collecting network debug"
       
-      echo "$(date) networking started" >> /var/log/boot.log
-      ip ad sh 2>/dev/stdout >> /var/log/boot.log
-      ip li sh 2>/dev/stdout >> /var/log/boot.log
-      ping -c 1 8.8.8.8 2>/dev/stdout >> /var/log/boot.log
+      echo "date: $(date) networking should be started" >> /var/log/boot.log
 
-      ifup eth0 2>/dev/stdout >> /var/log/boot.log
       ip ad sh 2>/dev/stdout >> /var/log/boot.log
       ip li sh 2>/dev/stdout >> /var/log/boot.log
+
       echo "$(ping -c 1 8.8.8.8 2>/dev/stdout)" >> /var/log/boot.log
 
       ps -ef 2>/dev/stdout >> /var/log/boot.log
 
       rc-update 2>/dev/stdout >> /var/log/boot.log
+      
+      echo "uptime: $(uptime)" 2>/dev/stdout >> /var/log/boot.log
 
       eend $?
 }
