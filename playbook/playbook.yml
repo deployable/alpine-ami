@@ -5,6 +5,7 @@
   vars:
     path_build: /tmp
     dev_alpine: xvdf
+    dev_alpine_eventual: xvda
     file_iso: alpine-standard-3.5.2-x86_64.iso
     pubkey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCqGxLbtArl7UE1noY1tNpRxxQUFCTiSUzFBtT/TYvb8ZWn+wy6dgM5yh6jWQl/0ZCLgqF8tNZCemJ64KfL1+5QZAa027+2YqJuSqO0kYZk6fJ7o67P+zEny27NbAnERBLoTde0btGVd1ZneDTCfLROmbTJGKA9EyZ98CyCfBJNqYRllsNrqOfAKegxwSrRNYepuq3eGWKMfTvRECHq0XdTRdcQ7HpF+rZUPqnWwOv8zQZ8kWwepiqk5dQryfusvkj6EZHdW8ftc2ExOCCY9Mo/Zi2ggWvVlIdCRuV8X/7Ki4qVVohOpNFbuJr8HRDSq0q3kxkVdxRQkAgXLG1+tM2DaRD22F1r7KJEncU1K3Gq0CDxYQkfjQNcyRsn3/mJ3dphS0WskuL5xHxex1O3XTIlfqI0l8dSxdscDGtXiwF2+fccxCzOzovGauzGWrtCNVwNkepPt632AkGna379Qpms6HbZGnbr1LHA36OZ6xAY8w8RpkEFG34LVcH0Dfotsp8= admin@alpine
   become: yes
@@ -79,17 +80,13 @@
   #     src: grub.j2
   #     dest: '{{ path_build }}/target/boot/grub/grub.conf'
   
-  - shell: blkid -o value /dev/xvdf1
-    register: blkid_xvdf1
+  - shell: 'blkid -o value /dev/{{dev_alpine}}1'
+    register: blkid_dev
 
-  - debug: var=blkid_xvdf1.stdout_lines
+  - debug: var=blkid_dev.stdout_lines
 
   - set_fact:
-      blk_uuid: '{{ blkid_xvdf1.stdout_lines[0] }}'
-
-  - template: 
-      src: extlinux.conf.j2
-      dest: '{{ path_build }}/target/boot/extlinux.conf'
+      blk_uuid: '{{ blkid_dev.stdout_lines[0] }}'
 
   - get_url:    
       url: http://dl-cdn.alpinelinux.org/alpine/v3.5/main/x86_64/apk-tools-static-2.6.8-r2.apk
@@ -121,11 +118,11 @@
       mknod -m 644 {{chroot_dir}}/dev/urandom c 1 9
       mknod -m 666 {{chroot_dir}}/dev/zero c 1 5
       mknod -m 666 {{chroot_dir}}/dev/tty c 5 0
-      mknod -m 666 {{chroot_dir}}/dev/xvda b 8 0
-      mknod -m 666 {{chroot_dir}}/dev/xvda1 b 8 1
-      mknod -m 666 {{chroot_dir}}/dev/xvda2 b 8 2
-      mknod -m 666 {{chroot_dir}}/dev/xvda3 b 8 3
-      mknod -m 666 {{chroot_dir}}/dev/xvda4 b 8 4
+      mknod -m 666 {{chroot_dir}}/dev/{{dev_alpine_eventual}} b 8 0
+      mknod -m 666 {{chroot_dir}}/dev/{{dev_alpine_eventual}}1 b 8 1
+      mknod -m 666 {{chroot_dir}}/dev/{{dev_alpine_eventual}}2 b 8 2
+      mknod -m 666 {{chroot_dir}}/dev/{{dev_alpine_eventual}}3 b 8 3
+      mknod -m 666 {{chroot_dir}}/dev/{{dev_alpine_eventual}}4 b 8 4
       rm -f {{chroot_dir}}/dev/null
       mknod -m 666 {{chroot_dir}}/dev/null c 1 3
       mount -t proc none {{chroot_dir}}/proc
@@ -142,17 +139,32 @@
   - name: chroot config
     shell: |
       # Config
-      echo "/dev/xvda1 / ext4 defaults 1 1" >> {{chroot_dir}}/etc/fstab
-      echo "/dev/xvda2 none swap sw 0 0" >> {{chroot_dir}}/etc/fstab
+      echo "/dev/{{dev_alpine_eventual}}1 / ext4 defaults 1 1" >> {{chroot_dir}}/etc/fstab
+      echo "/dev/{{dev_alpine_eventual}}2 none swap sw 0 0" >> {{chroot_dir}}/etc/fstab
       echo "ipv6" >> {{chroot_dir}}/etc/modules
       echo "awsbuild" > {{chroot_dir}}/etc/hostname
       mkdir -p {{chroot_dir}}/home/admin/.ssh
       echo '{{pubkey}}' > {{chroot_dir}}/home/admin/.ssh/authorized_keys
       cp /etc/resolv.conf {{chroot_dir}}/etc/
-      tar -xzf apk-tools-static-2.6.8-r2.apk
-      ./sbin/apk.static -X http://dl-cdn.alpinelinux.org/alpine/v3.5/main -U --allow-untrusted --root {{chroot_dir}} --initdb add alpine-base alpine-conf syslinux 
       echo alpine-ec2 > {{chroot_dir}}/etc/motd
-      chroot {{chroot_dir}} /chroot_run.sh
+
+      tar -xzf apk-tools-static-2.6.8-r2.apk
+      ./sbin/apk.static -X http://dl-cdn.alpinelinux.org/alpine/v3.5/main -U --allow-untrusted --root {{chroot_dir}} --initdb add alpine-base alpine-conf linux-virtgrsec syslinux 
+
+      rm -f {{chroot_dir}}/boot/libutil.c32 \
+         {{chroot_dir}}/boot/mboot.c32 \
+         {{chroot_dir}}/boot/menu.c32 \
+         {{chroot_dir}}/boot/vesamenu.c32 \
+         {{chroot_dir}}/boot/extlinux.conf.old
+    args:
+      chdir: '{{path_build}}'
+
+  - template: 
+      src: extlinux.conf.j2
+      dest: '{{ path_build }}/target/boot/extlinux.conf'
+
+  - name: chroot
+    command: chroot {{chroot_dir}} /chroot_run.sh
     args:
       chdir: '{{path_build}}'
 
