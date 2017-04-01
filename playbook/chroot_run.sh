@@ -14,9 +14,12 @@ http://dl-cdn.alpinelinux.org/alpine/v3.5/community' > /etc/apk/repositories
 apk update
 apk add --no-cache \
   iproute2 iptables ip6tables iputils \
-  e2fsprogs coreutils util-linux syslinux procps pstree \
-  sudo grep gzip tar bash gawk sed less vim jq curl \
-  openssh python2 py2-pip 
+  e2fsprogs coreutils util-linux syslinux \
+  sudo bash \
+  openssh dhcpcd
+#  procps pstree \
+# grep gzip tar bash gawk sed less vim jq curl \
+#  python2 py2-pip 
 
 
 extlinux --install /boot
@@ -51,8 +54,8 @@ rc-update add killprocs shutdown
 rc-update add savecache shutdown
 
 # AWS
-pip install --upgrade pip
-pip install awscli
+#pip install --upgrade pip
+#pip install awscli
 
 
 adduser -D -h /home/admin admin

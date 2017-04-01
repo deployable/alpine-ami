@@ -5,4 +5,4 @@ LABEL alpine
  SAY Booting alpine
  LINUX vmlinuz-grsec
  INITRD initramfs-grsec
- APPEND root=UUID={{blk_uuid}} modules=sd-mod,ext4 console=tty0 console=ttyS0,9600
+ APPEND root=UUID={{blk_uuid}} modules=sd-mod,ext4,ipv6 console=tty1 console=ttyS0,9600
