@@ -24,8 +24,10 @@ rc-update add savecache shutdown
 
 adduser -D -h /home/admin admin
 pwd="$(uuidgen)"
-echo -e "admin\nadmin\n" | passwd admin
+echo "$pwd
+$pwd" | passwd admin
 pwd="$(uuidgen)"
-echo -e "$pwd\n$pwd\n" | passwd root
+echo -e "$pwd
+$pwd" | passwd root
 
 df -h
