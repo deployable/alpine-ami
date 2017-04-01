@@ -58,6 +58,7 @@ rc-update add savecache shutdown
 #pip install awscli
 
 
+
 adduser -D -h /home/admin admin
 pwd="$(uuidgen)"
 echo -e "admin\nadmin\n" | passwd admin
