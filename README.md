@@ -23,12 +23,12 @@ Ansible is available via `pip install ansible`, on epel in RHEL and on `ppa:ansi
 ```shell
 git clone https://github.com/deployable/alpine-ami && cd alpine-ami
 vi debian-alpine.json # set or delete `subnet_id` and `security_group_id`
-./make.sh
+./make.sh ami
 ```
 
 _Note:_ The build doesn't pick up the default ssh public key from AWS at the moment so the 
-ansible `pubkey` variable is statically configured. It will need to be modified to 
-whatever public ssh key you want to use. 
+ansible `pubkey` variable is locally configured. If you want to regenerate the keys just
+delete them from `./playbook` and the next make will create new ones.
 
 
 ### VirtualBox OVF
@@ -36,7 +36,7 @@ whatever public ssh key you want to use.
 The same build can be applied to VirtualBox to produce an OVF appliance.
 
 ```
-./make.sh build_virtualbox
+./make.sh virtualbox
 ```
 _Note:_ no guest additions installed
 
@@ -47,9 +47,15 @@ After building you can bring up the AMI on a nano instance via an included
  [Terraform](https://terraform.io) config.
 
 ```
-cd test/
-terraform apply -var test_ami=ami-[id]
-ssh -i ~/.ssh/id_rsa_alpine admin@[instance_ip]
+./make.sh terraform ami-[id]
+./make.sh ssh [instance_ip]
+```
+
+For Virtualbox you need to import the OVA and add a host only adapter, a 
+bridge adapter, or on NAT map a port to 22. Then you can ssh to it
+
+```
+./make.sh ssh [vbox_ip]
 ```
 
 ### About
