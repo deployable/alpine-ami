@@ -7,4 +7,4 @@ LABEL alpine
  SAY Booting alpine
  LINUX vmlinuz-virtgrsec
  INITRD initramfs-virtgrsec
- APPEND root=UUID={{blk_uuid}} modules=sd-mod,ext4,ipv6 {% if is_aws %}console=tty0 console=ttyS0,9600{%endif%}
+ APPEND root=UUID={{blk_uuid}} modules=sd-mod,ext4,ipv6 {% if is_aws %}console=tty0 console=ttyS0,9600{% endif %}

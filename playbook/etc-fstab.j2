@@ -1,2 +1,5 @@
-/dev/{{dev_alpine_eventual}}1 / ext4 defaults 1 1
-/dev/{{dev_alpine_eventual}}2 none swap sw 0 0
+/dev/{{dev_alpine_eventual}}2 / ext4 defaults 1 1
+/dev/{{dev_alpine_eventual}}1 /boot ext4 defaults 1 1
+{% if has_swap %}
+/dev/{{dev_alpine_eventual}}3 none swap sw 0 0
+{% endif %}

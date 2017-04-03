@@ -15,7 +15,7 @@ start() {
       ip ad sh 2>/dev/stdout >> /var/log/boot.log
       ip li sh 2>/dev/stdout >> /var/log/boot.log
 
-      echo "$(ping -c 1 8.8.8.8 2>/dev/stdout)" >> /var/log/boot.log
+      echo "$(ping -c 1 -w 5 8.8.8.8 2>/dev/stdout)" >> /var/log/boot.log
 
       ps -ef 2>/dev/stdout >> /var/log/boot.log
 

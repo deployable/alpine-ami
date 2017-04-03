@@ -6,11 +6,12 @@
     path_build: /tmp
     dev_alpine: sda
     dev_alpine_eventual: sda
-    dev_alpine_size: 2000MiB
+    dev_alpine_boot_end: 64MiB
+    dev_alpine_root_end: 2000MiB
     hostname: alpbox
     user_base: admin
+
   become: yes
 
   tasks:
-
     - include: alpine_build.yml

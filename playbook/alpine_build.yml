@@ -30,6 +30,8 @@
     is_aws: false
     is_vbox: false
     is_surrogate: false
+    has_swap: false
+    dev_alpine_swap_end: 100%
   tags: ["always"]
 
 - set_fact:
@@ -53,43 +55,63 @@
   apk:
     name: e2fsprogs, syslinux, parted
 
-- name: setup
+- name: setup alpine disk
   tags: ["surrogate","aws","vbox"]
   shell: |
     set -uex
-    parted /dev/{{dev_alpine}} mktable msdos
-    parted /dev/{{dev_alpine}} -sa optimal -- mkpart primary ext4 0% 1500MiB
-    parted /dev/{{dev_alpine}} set 1 boot on
-    parted /dev/{{dev_alpine}} -sa optimal -- mkpart primary linux-swap 1500.0001MiB {{dev_alpine_size}}
+    parted /dev/{{dev_alpine}} -s mktable msdos
+    parted /dev/{{dev_alpine}} -sa optimal -- mkpart primary ext4 0% {{dev_alpine_boot_end}}
+    parted /dev/{{dev_alpine}} -s set 1 boot on
+    parted /dev/{{dev_alpine}} -sa optimal -- mkpart primary ext4 {{dev_alpine_boot_end}} {{dev_alpine_root_end}}
     parted /dev/{{dev_alpine}} print list
+  args:
+    chdir: '{{ path_build }}'
+
+- name: setup alpine disk swap
+  tags: ["surrogate","aws","vbox"]
+  shell: |
+    set -uex
+    parted /dev/{{dev_alpine}} -sa optimal -- mkpart primary linux-swap {{dev_alpine_root_end}} {{dev_alpine_swap_end}}
+    mkswap /dev/{{dev_alpine}}2
+  args:
+    chdir: '{{ path_build }}'
+  when: has_swap
+
+#setup-disk -m sys -k virtgrsec -s 0 -v /mnt/target /dev/sda
+
+- name: mount alpine disk
+  tags: ["surrogate","aws","vbox"]
+  shell: |
     mkdir target
     mkdir source
     mke2fs -t ext4 /dev/{{dev_alpine}}1
-    mkswap /dev/{{dev_alpine}}2
-    mount -t ext4 /dev/{{dev_alpine}}1 target
+    mke2fs -t ext4 /dev/{{dev_alpine}}2
+    mount -t ext4 /dev/{{dev_alpine}}2 target
+    mkdir -p target/boot
+    mount -t ext4 /dev/{{dev_alpine}}1 target/boot
   args:
     chdir: '{{ path_build }}'
 
-- name: 'get release iso for debian'
-  tags: ["surrogate","aws"]
-  get_url:    
-    url: http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/releases/x86_64/{{file_iso}}
-    dest: '{{ path_build }}/{{file_iso}}'
+# - name: 'get release iso for debian surrogate installs'
+#   tags: ["surrogate","aws"]
+#   get_url:    
+#     url: http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/releases/x86_64/{{file_iso}}
+#     dest: '{{ path_build }}/{{file_iso}}'
 
-- name: extract iso
-  shell: |
-    set -uex
-    mount -o loop {{file_iso}} source
-    cp -av source/boot target
-    rm -f target/boot/modloop-grsec
-    rm -f target/boot/modloop-virtgrsec
-    rm -rf target/boot/syslinux
-    umount source
-  args:
-    chdir: '{{ path_build }}'
-  tags: ["surrogate","aws"]
+# - name: extract iso
+#   shell: |
+#     set -uex
+#     mount -o loop {{file_iso}} source
+#     cp -av source/boot target
+#     rm -f target/boot/modloop-grsec
+#     rm -f target/boot/modloop-virtgrsec
+#     rm -rf target/boot/syslinux
+#     umount source
+#   args:
+#     chdir: '{{ path_build }}'
+#   tags: ["surrogate","aws"]
 
-- shell: 'blkid -o value /dev/{{dev_alpine}}1'
+- shell: 'blkid -o value /dev/{{dev_alpine}}2'
   register: blkid_dev
   tags: ["surrogate","aws","vbox"]
 
@@ -174,20 +196,20 @@
   args:
     chdir: '{{path_build}}'
 
-- name: get apk statuc
+- name: get apk static for debian
   tags: ["surrogate","aws","vbox"]
   get_url:    
     url: http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/main/x86_64/apk-tools-static-2.6.8-r2.apk
     dest: '{{ path_build }}/apk-tools-static-2.6.8-r2.tgz'
 
-- name: extract apk statuc
+- name: extract apk static
   tags: ["surrogate","aws","vbox"]
   unarchive:
     src: '{{path_build}}/apk-tools-static-2.6.8-r2.tgz'
     dest: '{{path_build}}'
     remote_src: yes
 
-- name: chroot system apk install
+- name: install packages with apk static
   tags: ["surrogate","aws","vbox"]
   command: '{{path_build}}/sbin/apk.static -X http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/main -U --allow-untrusted --root {{chroot_dir}} --initdb add alpine-base linux-virtgrsec iproute2 iptables ip6tables iputils e2fsprogs coreutils util-linux syslinux sudo bash openssh dhcpcd'
 
@@ -219,6 +241,10 @@
   tags: ["vbox"]
   command: extlinux --install {{chroot_dir}}/boot
 
+- name: 'extlinux mbr'
+  tags: ["vbox"]
+  shell: cat /usr/share/syslinux/mbr.bin > /dev/{{dev_alpine}}
+
 - name: 'extlinux for chroot'
   tags: ["surrogate","aws"]
   command: chroot {{chroot_dir}} extlinux --install /boot
@@ -247,9 +273,9 @@
     dest: '{{chroot_dir}}/etc/sudoers'
     line: '{{user_base}} ALL = NOPASSWD: ALL'
 
-- name: 'shutdown vbox'
-  tags: ["vbox"]
-  command: halt -d 10
+# - name: 'shutdown vbox'
+#   tags: ["vbox"]
+#   command: halt -d 10
 
 # wget 
 # apk update
