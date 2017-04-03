@@ -1,15 +1,19 @@
 {
   "builders": [{
     "type"         : "amazon-ebssurrogate",
-    "region"       : "ap-southeast-2",
-    "source_ami"   : "ami-881317eb",
     "instance_type": "t2.nano",
+    "source_ami"   : "ami-881317eb",
+
+    "region"       : "ap-southeast-2",
     "subnet_id"    : "subnet-85f0fcc3",
     "security_group_id": "sg-2b52e14f",
+    
     "ssh_username" : "admin",
-    "ami_name"     : "alpine-virt-{{timestamp}}",
     "ssh_timeout"  : "2m",
+
+    "ami_name"     : "alpine-virt-{{timestamp}}",
     "ami_virtualization_type": "hvm",
+
     "launch_block_device_mappings" : [
       {
         "device_name" : "/dev/xvdf",
