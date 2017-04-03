@@ -17,6 +17,7 @@ brew install ansible
 On Linux, [download](https://www.packer.io/downloads.html) or check your package manager.
 Ansible is available via `pip install ansible`, on epel in RHEL and on `ppa:ansible/ansible` in Ubuntu.
 
+
 ## Build AMI
 
 ```shell
