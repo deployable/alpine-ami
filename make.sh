@@ -41,8 +41,10 @@ fi
 
 build_virtualbox(){
   build_sshkeys_conditional
+  set +e
   pkill -f 'packer build alpine-vagrant.json'
   rm -rf output-virtualbox-iso/
+  set -e
   packer build $PACKER_ARGS alpine-vagrant.json
 }
 
@@ -54,7 +56,8 @@ build_ami(){
 build_sshkeys_conditional(){
   if [ ! -f "$rundir"/playbook/id_rsa_alpine ]; then
     build_sshkeys
-  else echo "'playbook/id_rsa_alpine' already generated"
+  else
+    echo "'playbook/id_rsa_alpine' already generated"
   fi
 }
 
@@ -67,10 +70,16 @@ build_sshkeys(){
 
 run_ssh(){
   local_ip=$1
-  while sleep 3; do
+  set +e
+  while true; do
     ssh -o ConnectTimeout=10 -i "$rundir"/playbook/id_rsa_alpine admin@$local_ip
+    if [ "$?" == "0" ]; then 
+      break
+    fi
     echo retrying
+    sleep 5
   done
+  set -e
 }
 
 run_terraform(){
@@ -83,12 +92,12 @@ run_terraform(){
 # ## Shortcuts
 
 case $cmd in
-  'ami')        build_ami "$@";;
-  'virtualbox') virtualbox "$@";;
-  'ssh')        run_ssh "$@";;
-  'keys')       build_sshkeys "$@";;
-  'terraform')  run_terraform "$@";;
   'build')      build_ami "$@";;
+  'ami')        build_ami "$@";;
+  'virtualbox') build_virtualbox "$@";;
+  'keys')       build_sshkeys "$@";;
+  'ssh')        run_ssh "$@";;
+  'terraform')  run_terraform "$@";;
   *)            $cmd "$@";;
 esac
 

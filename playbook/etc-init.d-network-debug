@@ -3,7 +3,7 @@
 description="Debugs network setup"
 
 depend() {
-        need net
+        after sshd
         keyword -prefix -networking
 }
 
