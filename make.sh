@@ -88,6 +88,7 @@ case $cmd in
   'ssh')        run_ssh "$@";;
   'keys')       build_sshkeys "$@";;
   'terraform')  run_terraform "$@";;
+  'build')      build_ami "$@";;
   *)            $cmd "$@";;
 esac
 
