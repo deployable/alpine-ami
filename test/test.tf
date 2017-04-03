@@ -1,5 +1,12 @@
 variable "test_ami" {}
 
+variable "subnet_id" {
+  default = "subnet-85f0fcc3"
+}
+variable "security_group" {
+  default = "sg-2b52e14f"
+}
+
 provider "aws" {
 #  access_key = "ACCESS_KEY_HERE"
 #  secret_key = "SECRET_KEY_HERE"
@@ -9,18 +16,17 @@ provider "aws" {
 resource "aws_instance" "built" {
   ami           = "${var.test_ami}"
   instance_type = "t2.nano"
-  subnet_id     = "subnet-85f0fcc3"
-  key_name      = "mattapsydney"
-  vpc_security_group_ids  = ["sg-2b52e14f"]
+  subnet_id     = "${var.subnet_id}"
+  vpc_security_group_ids  = [ "${var.security_group}" ]
 }
 
-# Debug dhcp interface
+# Debug the dhcp interface
 # resource "aws_network_interface" "docker" {
-#   subnet_id       = "subnet-85f0fcc3"
+#   subnet_id       = var.subnet_id
 # #  private_ips     = [""]
-#   security_groups = ["sg-2b52e14f"]
+#   security_groups = [var.security_group]
 #   attachment {
-#     instance     = "${aws_instance.built.id}"
+#     instance     = aws_instance.built.id
 #     device_index = 1
 #   }
 # }
@@ -28,3 +34,4 @@ resource "aws_instance" "built" {
 output "address" {
   value = "${aws_instance.built.public_ip}"
 }
+
