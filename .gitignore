@@ -9,4 +9,6 @@ terraform.tfstate.backup
 .terraform.tfstate.lock.info
 
 playbook/*.retry
+id_rsa_alpine
+id_rsa_alpine.pub
 
