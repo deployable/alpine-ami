@@ -50,10 +50,18 @@
 
 # Steps
 
+- name: 'template /etc/apk/repositories etc-apk-repositories.j2'
+  tags: ["vbox"]
+  template: 
+    src: etc-apk-repositories.j2
+    dest: /etc/apk/repositories
+
 - name: "add install deps"
   tags: ["vbox"]
-  apk:
-    name: e2fsprogs, syslinux, parted
+#  apk:
+#    name: e2fsprogs, syslinux, parted, build-base
+  shell: apk add --no-cache e2fsprogs syslinux parted make gcc coreutils
+
 
 - name: setup alpine disk
   tags: ["surrogate","aws","vbox"]
@@ -128,14 +136,14 @@
     chroot_dir: '{{path_build}}/target'
   tags: ["surrogate","aws","vbox"]
 
-- get_url:    
-    url: http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/releases/x86_64/alpine-minirootfs-{{version}}-x86_64.tar.gz
-    dest: '{{ path_build }}/alpine-minirootfs-3.5.2-x86_64.tar.gz'
-  tags: ["surrogate","aws","vbox"]
+# - get_url:    
+#     url: http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/releases/x86_64/alpine-minirootfs-{{version}}-x86_64.tar.gz
+#     dest: '{{ path_build }}/alpine-minirootfs-3.5.2-x86_64.tar.gz'
+#   tags: ["surrogate","aws","vbox"]
 
-- unarchive:
-    src: '{{ path_build }}/alpine-minirootfs-3.5.2-x86_64.tar.gz'
-    dest: '{{ chroot_dir }}'
+# - unarchive:
+#     src: '{{ path_build }}/alpine-minirootfs-3.5.2-x86_64.tar.gz'
+#     dest: '{{ chroot_dir }}'
 
 
 - copy: 
@@ -196,6 +204,13 @@
   args:
     chdir: '{{path_build}}'
 
+- name: 'add vbox intel e1000 driver module'
+  tags: ["vbox"]
+  lineinfile:
+    dest: '{{chroot_dir}}/etc/modules'
+    line: 'e1000'
+
+
 - name: get apk static for debian
   tags: ["surrogate","aws","vbox"]
   get_url:    
@@ -209,7 +224,7 @@
     dest: '{{path_build}}'
     remote_src: yes
 
-- name: install packages with apk static
+- name: Install packages with apk static
   tags: ["surrogate","aws","vbox"]
   command: '{{path_build}}/sbin/apk.static -X http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/main -U --allow-untrusted --root {{chroot_dir}} --initdb add alpine-base linux-virtgrsec iproute2 iptables ip6tables iputils e2fsprogs coreutils util-linux syslinux sudo bash openssh dhcpcd'
 
@@ -224,6 +239,16 @@
     - '{{chroot_dir}}/boot/menu.c32'
     - '{{chroot_dir}}/boot/vesamenu.c32'
     - '{{chroot_dir}}/boot/extlinux.conf.old'
+
+
+# - name: Install vbox guest packages
+#   tags: ["vbox"]
+#   command: |
+#     mkdir /mnt/iso
+#     mount -o loop,ro VBoxGuestAdditions /mnt/iso
+#     sh /mnt/VBoxLinuxAdditions.run
+#     umount /mnt/iso
+
 
 - name: 'template /etc/fstab etc-fstab.j2'
   tags: ["surrogate","aws","vbox"]
@@ -267,15 +292,25 @@
     src: ./etc-network-interfaces.j2
     dest: '{{chroot_dir}}/etc/network/interfaces'
 
+- lineinfile:
+    dest: '{{chroot_dir}}/etc/ssh/sshd_config'
+    line: PermitTunnel yes
+- lineinfile:
+    dest: '{{chroot_dir}}/etc/ssh/sshd_config'
+    line: PasswordAuthentication no
+- lineinfile:
+    dest: '{{chroot_dir}}/etc/ssh/sshd_config'
+    line: PermitRootLogin no
+
 - name: 'lineinfile /etc/sudoers'
   tags: ["surrogate","aws","vbox"]
   lineinfile:
     dest: '{{chroot_dir}}/etc/sudoers'
     line: '{{user_base}} ALL = NOPASSWD: ALL'
 
-# - name: 'shutdown vbox'
-#   tags: ["vbox"]
-#   command: halt -d 10
+- name: 'shutdown vbox'
+  tags: ["vbox"]
+  command: halt -d 5
 
 # wget 
 # apk update

@@ -7,7 +7,7 @@
     "subnet_id"    : "subnet-85f0fcc3",
     "security_group_id": "sg-2b52e14f",
     "ssh_username" : "admin",
-    "ami_name"     : "alpine-0 {{timestamp}}",
+    "ami_name"     : "alpine-virt-{{timestamp}}",
     "ssh_timeout"  : "2m",
     "ami_virtualization_type": "hvm",
     "launch_block_device_mappings" : [

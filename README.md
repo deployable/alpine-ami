@@ -1,12 +1,13 @@
 # Alpine Linux AMI Build
 
-Build an [Alpine Linux](https://www.alpinelinux.org) EC2 AMI with 
- [Packer](https://www.packer.io) and [Ansible](https://www.ansible.com).
+Build an [Alpine Linux](https://www.alpinelinux.org) EC2 AMI with or OVA
+with [Packer](https://www.packer.io) and [Ansible](https://www.ansible.com).
 
 
 ## Setup
 
 The build requires `packer` and `ansible-playbook` to be installed.
+
 On a mac, use [brew](https://brew.sh).
 ```shell
 brew install packer
@@ -14,7 +15,7 @@ brew install ansible
 ```
 
 On Linux, [download](https://www.packer.io/downloads.html) or check your package manager.
-Ansible is available via `pip install ansible` or on epel for RHEL and `ppa:ansible/ansible` for Ubuntu.
+Ansible is available via `pip install ansible`, on epel in RHEL and on `ppa:ansible/ansible` in Ubuntu.
 
 ## Build AMI
 
@@ -36,7 +37,7 @@ The same build can be applied to VirtualBox to produce an OVF appliance.
 ```
 ./make.sh build_virtualbox
 ```
-_Note:_ not booting at the moment
+_Note:_ no guest additions installed
 
 
 ## Test

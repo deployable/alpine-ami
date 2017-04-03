@@ -7,7 +7,7 @@
     dev_alpine: sda
     dev_alpine_eventual: sda
     dev_alpine_boot_end: 64MiB
-    dev_alpine_root_end: 2000MiB
+    dev_alpine_root_end: 100%
     hostname: alpbox
     user_base: admin
 

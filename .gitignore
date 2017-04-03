@@ -6,6 +6,7 @@ output-virtualbox-iso/
 # Terraform test state
 terraform.tfstate
 terraform.tfstate.backup
+.terraform.tfstate.lock.info
 
 playbook/*.retry
 
