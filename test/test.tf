@@ -20,6 +20,7 @@ resource "aws_instance" "built" {
   vpc_security_group_ids  = [ "${var.security_group}" ]
 }
 
+
 # Debug the dhcp interface
 # resource "aws_network_interface" "docker" {
 #   subnet_id       = var.subnet_id
