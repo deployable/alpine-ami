@@ -67,7 +67,10 @@ build_sshkeys(){
 
 run_ssh(){
   local_ip=$1
-  ssh -i "$rundir"/playbook/id_rsa_alpine admin@$local_ip
+  while sleep 3; do
+    ssh -o ConnectTimeout=10 -i "$rundir"/playbook/id_rsa_alpine admin@$local_ip
+    echo retrying
+  done
 }
 
 run_terraform(){
@@ -79,24 +82,12 @@ run_terraform(){
 
 # ## Shortcuts
 
-ami(){
-  build_ami "$@"
-}
-
-virtualbox(){
-  build_virtualbox  "$@"
-}
-
-keys(){
-  build_sshkeys "$@"
-}
-
-build(){
-  build_ami "$@"
-}
-
-
-# run it
-
-$cmd "$@"
+case $cmd in
+  'ami')        build_ami "$@";;
+  'virtualbox') virtualbox "$@";;
+  'ssh')        run_ssh "$@";;
+  'keys')       build_sshkeys "$@";;
+  'terraform')  run_terraform "$@";;
+  *)            $cmd "$@";;
+esac
 
