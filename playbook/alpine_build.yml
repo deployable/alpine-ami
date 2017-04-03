@@ -1,6 +1,6 @@
 ---
 
-# Varibles you might want to change
+# Variables you might want to change
 
 - set_fact:
     version_major: 3
@@ -10,19 +10,46 @@
 
 - set_fact:
     version: '{{version_major}}.{{version_minor}}.{{version_patch}}'
-  tags: ["always"]
-
-- set_fact:
     version_major_minor: '{{version_major}}.{{version_minor}}'
   tags: ["always"]
 
+# Don't default devices, make the user set them.
+#- set_fact:
+#    dev_alpine: sda
+#    dev_alpine_eventual: sda
+
+# Not sure packer runs this like a normal playbook, so defaulting values
+# without using normal ansible precendence. Override these in the 
+# required `playbook_TTTT.yml` file.
 - set_fact:
-    pubkey: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCqGxLbtArl7UE1noY1tNpRxxQUFCTiSUzFBtT/TYvb8ZWn+wy6dgM5yh6jWQl/0ZCLgqF8tNZCemJ64KfL1+5QZAa027+2YqJuSqO0kYZk6fJ7o67P+zEny27NbAnERBLoTde0btGVd1ZneDTCfLROmbTJGKA9EyZ98CyCfBJNqYRllsNrqOfAKegxwSrRNYepuq3eGWKMfTvRECHq0XdTRdcQ7HpF+rZUPqnWwOv8zQZ8kWwepiqk5dQryfusvkj6EZHdW8ftc2ExOCCY9Mo/Zi2ggWvVlIdCRuV8X/7Ki4qVVohOpNFbuJr8HRDSq0q3kxkVdxRQkAgXLG1+tM2DaRD22F1r7KJEncU1K3Gq0CDxYQkfjQNcyRsn3/mJ3dphS0WskuL5xHxex1O3XTIlfqI0l8dSxdscDGtXiwF2+fccxCzOzovGauzGWrtCNVwNkepPt632AkGna379Qpms6HbZGnbr1LHA36OZ6xAY8w8RpkEFG34LVcH0Dfotsp8= admin@alpine'
+
+    # Boot partition is 0 to `dev_alpine_boot_end`
+    dev_alpine_boot_end: "{{ dev_alpine_boot_end | default('64MiB') }}"
+
+    # Root partition is `dev_alpine_boot_end` to `dev_alpine_root_end`
+    dev_alpine_root_end: "{{ dev_alpine_root_end | default('100%') }}"
+
+    # Disable swap on primary drive
+    has_swap: "{{ has_swap | default('false') }}"
+
+    # Swap partition (if enabled) is `dev_alpine_root_end` to `dev_alpine_swap_end`
+    dev_alpine_swap_end: "{{ dev_alpine_swap_end | default('100%') }}"
+
+    # Path to build in
+    path_build: "{{ path_build | default('/tmp') }}"
+
+    # Username to use for build and after
+    user_base: "{{ user_base | default('admin') }}"
+
+    # Hostname for the box
+    hostname: "{{ hostname | default('alpvirt') }}"
+
+    # Load the public key from disk
+    pubkey: "{{ pubkey | default(lookup('file', 'id_rsa_alpine.pub')) }}"
+
+    #file_iso: alpine-standard-{{version}}-x86_64.iso
   tags: ["always"]
 
-- set_fact:
-    file_iso: alpine-standard-{{version}}-x86_64.iso
-  tags: ["always"]
 
 # Variables based on the tags (need to be defaulted)
 
@@ -30,8 +57,6 @@
     is_aws: false
     is_vbox: false
     is_surrogate: false
-    has_swap: false
-    dev_alpine_swap_end: 100%
   tags: ["always"]
 
 - set_fact:
