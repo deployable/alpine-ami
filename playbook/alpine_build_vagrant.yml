@@ -1,0 +1,38 @@
+---
+
+# Variables you might want to change
+
+
+- set_fact:
+    path_build: "{{ path_build | default('/tmp') }}"
+  tags: ["always"]
+
+- set_fact:
+    chroot_dir: '{{path_build}}/target'
+  tags: ["always"]
+
+- shell: |
+    chroot /tmp/target adduser -D -h /home/vagrant vagrant
+    chroot /tmp/target sh -c 'echo "vagrant\nvagrant" | passwd vagrant'
+  tags: ["always"]
+
+- file:
+    state: directory 
+    dest: '{{chroot_dir}}/home/vagrant/.ssh'
+    mode: 0700
+    user: vagrant
+  tags: ["always"]
+
+- get_url:
+    src: https://raw.github.com/mitchellh/vagrant/master/keys/vagrant.pub
+    dest: '{{chroot_dir}}/home/vagrant/.ssh/authorized_keys'
+    mode: 0600
+    user: vagrant
+  tags: ["always"]
+
+- name: 'lineinfile /etc/sudoers'
+  lineinfile:
+    dest: '{{chroot_dir}}/etc/sudoers'
+    line: 'vagrant ALL = NOPASSWD: ALL'
+  tags: ["always"]
+

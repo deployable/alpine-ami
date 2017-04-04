@@ -51,7 +51,7 @@ After building you can bring up the AMI on a nano instance via an included
 ./make.sh ssh [instance_ip]
 ```
 
-For Virtualbox you need to import the OVA and add a host only adapter, a 
+For Virtualbox you need to import the OVF and add a host only adapter, a 
 bridge adapter, or on NAT map a port to 22. Then you can ssh to it
 
 ```

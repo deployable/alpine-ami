@@ -85,7 +85,7 @@
   tags: ["vbox"]
 #  apk:
 #    name: e2fsprogs, syslinux, parted, build-base
-  shell: apk add --no-cache e2fsprogs syslinux parted make gcc coreutils
+  shell: apk add --no-cache e2fsprogs syslinux parted
 
 
 - name: setup alpine disk
@@ -251,7 +251,9 @@
 
 - name: Install packages with apk static
   tags: ["surrogate","aws","vbox"]
-  command: '{{path_build}}/sbin/apk.static -X http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/main -U --allow-untrusted --root {{chroot_dir}} --initdb add alpine-base linux-virtgrsec iproute2 iptables ip6tables iputils e2fsprogs coreutils util-linux syslinux sudo bash openssh dhcpcd'
+  command: '{{path_build}}/sbin/apk.static --no-cache -X http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/main -U --allow-untrusted --root {{chroot_dir}} --initdb add alpine-base linux-virtgrsec iproute2 iptables ip6tables iputils e2fsprogs coreutils util-linux syslinux sudo bash openssh dhcpcd'
+
+#dropbear dropbear-scp
 
 - name: remove kernel bits
   tags: ["surrogate","aws","vbox"]
@@ -318,6 +320,11 @@
     dest: '{{chroot_dir}}/etc/network/interfaces'
 
 - lineinfile:
+    dest: '{{chroot_dir}}/etc/rc.conf'
+    regex: ^\s*#?\s*rc_logger=
+    line: rc_logger="YES"
+
+- lineinfile:
     dest: '{{chroot_dir}}/etc/ssh/sshd_config'
     line: PermitTunnel yes
 - lineinfile:
@@ -333,9 +340,7 @@
     dest: '{{chroot_dir}}/etc/sudoers'
     line: '{{user_base}} ALL = NOPASSWD: ALL'
 
-- name: 'shutdown vbox'
-  tags: ["vbox"]
-  command: halt -d 5
+
 
 # wget 
 # apk update

@@ -38,22 +38,21 @@
     "export_opts": [
       "--manifest",
       "--vsys", "0",
-      "--description", "Alpine Linux 3.5.2 vagrant",
+      "--description", "Alpine Linux 3.5.2 vbox",
       "--version", "{{user `vm_version`}}"
     ],
 
-    "vm_name": "alpine-vagrant",
-    "output_directory": "output-vagrant"
+    "vm_name": "alpine-vbox",
+    "output_directory": "output-vbox"
 
   }],
   "provisioners": [
     {
       "type": "ansible",
-      "playbook_file": "./playbook/playbook_vagrant.yml",
+      "playbook_file": "./playbook/playbook_vbox.yml",
       "groups": "alpine",
-      "extra_arguments": [ "-vv", "-t", "vbox"]
+      "extra_arguments": [ "-vv", "-t", "vbox" ]
     }
-  ],
-  "post-processors": ["vagrant"]
+  ]
 }
 
