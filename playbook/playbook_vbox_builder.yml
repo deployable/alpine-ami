@@ -1,0 +1,18 @@
+
+---
+- hosts: alpine
+  
+  vars:
+    dev_alpine: sda
+    dev_alpine_eventual: sda
+    hostname: alpbox
+
+  become: yes
+
+  tasks:
+
+    - include: alpine_build.yml
+    - include: alpine_build_builder.yml
+
+    - name: 'shutdown vbox'
+      command: halt -d 5

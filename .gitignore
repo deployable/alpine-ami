@@ -2,6 +2,10 @@
 packer_cache/
 ec2_amazon-ebssurrogate.pem
 output-virtualbox-iso/
+output-builder/
+output-vagrant/
+output-vbox/
+.vagrant/
 
 # Terraform test state
 terraform.tfstate

@@ -32,18 +32,51 @@ if [ -z "${PACKER_ARGS:-}" ]; then
   PACKER_ARGS=''
 fi
 
+if [ -z "${SSH_ARGS:-}" ]; then
+  SSH_ARGS=''
+fi
+
 # DEBUG environment var
 if [ -n "${DEBUG:-}" ]; then
   PACKER_ARGS="$PACKER_ARGS -debug"
+  SSH_ARGS="$SSH_ARGS -v"
 fi
 
 # ## Builds
 
+build_virtualbox_builder(){
+  build_sshkeys_conditional
+  set +e
+  pkill -f 'packer build alpine-virtualbox-builder.json'
+  rm -rf output-builder/
+  set -e
+  packer build $PACKER_ARGS alpine-virtualbox-builder.json
+}
+
 build_virtualbox(){
+  if [ ! -f ./output-builder//alpine-vbox-builder.ovf ]; then
+    echo "need to run 'build_virtualbox_builder'"
+    return 1
+  fi
   build_sshkeys_conditional
   set +e
   pkill -f 'packer build alpine-vagrant.json'
-  rm -rf output-virtualbox-iso/
+  pkill -f 'packer build alpine-virtualbox.json'
+  rm -rf output-vbox/
+  set -e
+  packer build $PACKER_ARGS alpine-virtualbox.json
+}
+
+build_vagrant(){
+  if [ ! -f ./output-builder//alpine-vbox-builder.ovf ]; then
+    echo "need to run 'build_virtualbox_builder'"
+    return 1
+  fi
+  build_sshkeys_conditional
+  set +e
+  pkill -f 'packer build alpine-vagrant.json'
+  pkill -f 'packer build alpine-virtualbox.json'
+  rm -rf output-vagrant/
   set -e
   packer build $PACKER_ARGS alpine-vagrant.json
 }
@@ -68,11 +101,16 @@ build_sshkeys(){
 
 # ## Run
 
+run_ami_ssh(){
+  local_ip=$1
+  ssh $SSH_ARGS -i ec2_amazon-ebssurrogate.pem admin@$local_ip
+}
+
 run_ssh(){
   local_ip=$1
   set +e
   while true; do
-    ssh -o ConnectTimeout=10 -i "$rundir"/playbook/id_rsa_alpine admin@$local_ip
+    ssh $SSH_ARGS -o ConnectTimeout=10 -i "$rundir"/playbook/id_rsa_alpine admin@$local_ip
     if [ "$?" == "0" ]; then 
       break
     fi
@@ -88,16 +126,26 @@ run_terraform(){
   terraform apply -var test_ami=$local_ami
 }
 
+run_help(){
+  echo 'Help:'
+  echo ' build | ami      Build the ami'
+  echo ' virtualbox       Build the ova'
+  echo ' keys             Generate ssh keys'
+  echo ' ssh [ip]         SSH with keys to ip'
+  echo ' terraform [ami]  Bring up new ami with terraform'
+}
 
 # ## Shortcuts
 
 case $cmd in
-  'build')      build_ami "$@";;
-  'ami')        build_ami "$@";;
-  'virtualbox') build_virtualbox "$@";;
-  'keys')       build_sshkeys "$@";;
-  'ssh')        run_ssh "$@";;
-  'terraform')  run_terraform "$@";;
-  *)            $cmd "$@";;
+  'build'|'ami')  build_ami "$@";;
+  'builder')      build_virtualbox_builder "$@";;
+  'virtualbox')   build_virtualbox "$@";;
+  'vagrant')      build_vagrant "$@";;
+  'keys')         build_sshkeys "$@";;
+  'ssh')          run_ssh "$@";;
+  'terraform')    run_terraform "$@";;
+  '-h'|'--help')  run_help;;
+  *)              $cmd "$@";;
 esac
 
