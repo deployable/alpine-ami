@@ -188,14 +188,32 @@ run_terraform(){
     -var region="$local_region"
 }
 
+run_terraform_destroy(){
+  local_ami=$1
+  local_subnet=${2:-$AWS_SUBNET}
+  local_group=${3:-$AWS_SECURITY_GROUP}
+  local_region=${4:-${AWS_REGION:-ap-southeast-2}}
+
+  cd "$rundir"/test
+  terraform apply $TERRAFORM_ARGS \
+    -var test_ami=$local_ami \
+    -var subnet="$local_subnet" \
+    -var security_group="$local_group" \
+    -var region="$local_region"
+}
+
 run_help(){
   echo 'Help:'
-  echo ' build | aws      Build the aws ami'
-  echo ' vagrant          Build the .box'
-  echo ' virtualbox       Build the .ovf'
-  echo ' keys             Generate ssh keys'
-  echo ' ssh [ip]         SSH with keys to ip'
-  echo ' terraform [ami]  Bring up new ami with terraform'
+  echo ' aws [subnet] [sg] [region] Build the aws ami'
+  echo ' vagrant                    Build the .box'
+  echo ' virtualbox                 Build the .ovf'
+  echo ' keys                       Generate ssh keys'
+  echo
+  echo ' ssh [ip]                   SSH with keys to ip'
+  echo ' test [ami] [subnet] [sg] [region]'
+  echo '                            Bring up new ami with terraform'
+  echo ' test_destroy [ami] [subnet] [sg] [region]'
+  echo '                            Destroy the terraform resource'
 }
 
 # ## Shortcuts
@@ -208,7 +226,8 @@ case $cmd in
   'vagrant')      build_vagrant "$@";;
   'keys')         build_sshkeys "$@";;
   'ssh')          run_ssh "$@";;
-  'terraform')    run_terraform "$@";;
+  'test')         run_terraform "$@";;
+  'test_destroy') run_terraform_destroy "$@";;
   '-h'|'--help')  run_help;;
   *)              $cmd "$@";;
 esac

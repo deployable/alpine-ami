@@ -11,8 +11,8 @@
 - shell: |
     chroot {{chroot_dir}} sh -c 'uuid=$(uuidgen); printf "%s\n%s\n" "$uuid" "$uuid" | passwd root'
     chroot {{chroot_dir}} apk add python py2-pip
-    chroot {{chroot_dir}} pip install --upgrade pip
-    chroot {{chroot_dir}} pip install awscli
+    chroot {{chroot_dir}} pip --no-cache-dir install --upgrade pip
+    chroot {{chroot_dir}} pip --no-cache-dir install awscli
   tags: ["always"]
   # environment:
   #   http_proxy: '{{HTTP_PROXY}}'

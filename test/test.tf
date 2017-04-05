@@ -1,8 +1,12 @@
 variable "test_ami" {}
 
-variable "subnet" {}
+variable "subnet" {
+  default = "Var `subnet`"
+}
 
-variable "security_group" {}
+variable "security_group" {
+  default = "Var `security_group`"
+}
 
 variable "region" {
   default = "ap-southeast-2"

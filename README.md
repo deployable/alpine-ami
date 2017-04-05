@@ -47,8 +47,10 @@ After building you can bring up the AMI (output at the end of the build step) on
 instance via an included [Terraform](https://terraform.io) config.
 
 ```shell
-./make.sh terraform ami-[id] subnet-XXXXXXXX sg-XXXXXXXX eu-central-1
+./make.sh test ami-[id] subnet-XXXXXXXX sg-XXXXXXXX eu-central-1
 ./make.sh ssh [instance_ip]
+./make.sh test_destroy ami-[id] subnet-XXXXXXXX sg-XXXXXXXX eu-central-1
+
 ```
 
 
