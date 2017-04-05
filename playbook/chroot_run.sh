@@ -19,7 +19,6 @@ rc-update add syslog boot
 rc-update add sshd boot
 rc-update add mount-ro shutdown
 rc-update add killprocs shutdown
-rc-update add urandom shutdown
 rc-update add savecache shutdown
 
 # AWS
