@@ -205,16 +205,16 @@ run_terraform_destroy(){
 
 run_help(){
   echo 'Help:'
-  echo ' aws [subnet] [sg] [region] Build the aws ami'
-  echo ' vagrant                    Build the .box'
-  echo ' virtualbox                 Build the .ovf'
-  echo ' keys                       Generate ssh keys'
+  echo ' aws [subnet] [sg] [region]     Build the aws ami'
+  echo ' vagrant                        Build the .box'
+  echo ' virtualbox                     Build the .ovf'
+  echo ' keys                           Generate ssh keys'
   echo
-  echo ' ssh [ip]                   SSH with keys to ip'
+  echo ' ssh [ip]                       SSH with keys to ip'
   echo ' test [ami] [subnet] [sg] [region]'
-  echo '                            Bring up new ami with terraform'
+  echo '                                Bring up new ami with terraform'
   echo ' test_destroy [ami] [subnet] [sg] [region]'
-  echo '                            Destroy the terraform resource'
+  echo '                                Destroy the terraform resource'
 }
 
 
