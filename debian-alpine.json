@@ -1,39 +1,46 @@
 {
+  "variables": {
+    "region":           "ap-southeast-2",
+    "ami":              "ami-881317eb",
+    "subnet":           "{{env `AWS_SUBNET`}}",
+    "security_group":   "{{env `AWS_SECURITY_GROUP`}}"
+  },
   "builders": [{
-    "type"         : "amazon-ebssurrogate",
-    "instance_type": "t2.nano",
-    "source_ami"   : "ami-881317eb",
+    "type":             "amazon-ebssurrogate",
+    "instance_type":    "t2.nano",
 
-    "region"       : "ap-southeast-2",
-    "subnet_id"    : "subnet-85f0fcc3",
-    "security_group_id": "sg-2b52e14f",
+    "region":           "{{user `region`}}",
+    "source_ami":       "{{user `ami`}}",
+
+    "subnet_id":        "{{user `subnet`}}",
+    "security_group_id": "{{user `security_group`}}",
     
-    "ssh_username" : "admin",
-    "ssh_timeout"  : "2m",
+    "ssh_username":     "admin",
+    "ssh_timeout":      "2m",
 
-    "ami_name"     : "alpine-virt-{{timestamp}}",
+    "ami_name":         "alpine-virt-{{timestamp}}",
     "ami_virtualization_type": "hvm",
 
     "launch_block_device_mappings" : [
       {
-        "device_name" : "/dev/xvdf",
-        "delete_on_termination" : false,
-        "volume_size" : 2,
-        "volume_type" : "gp2"
+        "device_name":  "/dev/xvdf",
+        "volume_size":  2,
+        "volume_type":  "gp2",
+        "delete_on_termination" : false
       }
     ],
     "ami_root_device": {
       "source_device_name": "/dev/xvdf",
-      "device_name": "/dev/xvda",
-      "delete_on_termination": true,
-      "volume_size": 8,
-      "volume_type": "gp2"
+      "device_name":    "/dev/xvda",
+      "volume_size":    8,
+      "volume_type":    "gp2",
+      "delete_on_termination": true
     }
   }],
   "provisioners": [{
-    "type": "ansible",
-    "playbook_file": "./playbook/playbook_aws.yml",
-    "groups": "alpine",
-    "extra_arguments": ["-vv", "-t", "aws"]
+    "type":             "ansible",
+    "playbook_file":    "./playbook/playbook_aws.yml",
+    "groups":           "alpine",
+    "extra_arguments":  ["-vv", "-t", "aws"]
   }]
 }

@@ -1,22 +1,23 @@
 variable "test_ami" {}
 
-variable "subnet_id" {
-  default = "subnet-85f0fcc3"
-}
-variable "security_group" {
-  default = "sg-2b52e14f"
+variable "subnet" {}
+
+variable "security_group" {}
+
+variable "region" {
+  default = "ap-southeast-2"
 }
 
 provider "aws" {
 #  access_key = "ACCESS_KEY_HERE"
 #  secret_key = "SECRET_KEY_HERE"
-  region     = "ap-southeast-2"
+  region     = "${var.region}"
 }
 
 resource "aws_instance" "built" {
   ami           = "${var.test_ami}"
   instance_type = "t2.nano"
-  subnet_id     = "${var.subnet_id}"
+  subnet_id     = "${var.subnet}"
   vpc_security_group_ids  = [ "${var.security_group}" ]
 }
 

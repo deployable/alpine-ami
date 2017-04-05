@@ -4,6 +4,7 @@ Build an [Alpine Linux](https://www.alpinelinux.org) EC2 AMI with or OVA
 with [Packer](https://www.packer.io) and [Ansible](https://www.ansible.com).
 
 
+
 ## Setup
 
 The build requires `packer` and `ansible-playbook` to be installed.
@@ -14,50 +15,104 @@ brew install packer
 brew install ansible
 ```
 
-On Linux, [download](https://www.packer.io/downloads.html) or check your package manager.
-Ansible is available via `pip install ansible`, on epel in RHEL and on `ppa:ansible/ansible` in Ubuntu.
+On Linux, [download](https://www.packer.io/downloads.html) or check your package 
+manager. Ansible is available via `pip install ansible`, on epel in RHEL and on 
+`ppa:ansible/ansible` in Ubuntu.
+
+Then clone the repo
+
+```shell
+git clone https://github.com/deployable/alpine-ami && cd alpine-ami
+```
+
 
 
 ## Build AMI
 
+Building requires a VPC subnet and security group that allows SSH access.
+You can specify a region as well. 
+
 ```shell
-git clone https://github.com/deployable/alpine-ami && cd alpine-ami
-vi debian-alpine.json # set or delete `subnet_id` and `security_group_id`
-./make.sh ami
+./make.sh aws subnet-XXXXXXXX sg-XXXXXXXX eu-central-1
 ```
 
 _Note:_ The build doesn't pick up the default ssh public key from AWS at the moment so the 
-ansible `pubkey` variable is locally configured. If you want to regenerate the keys just
-delete them from `./playbook` and the next make will create new ones.
+ansible `pubkey` variable is locally configured. If you want to regenerate the key just
+delete them from `./playbook` and the next `make` will create a new one.
 
 
-### VirtualBox OVF
+### Test
+
+After building you can bring up the AMI (output at the end of the build step) on a nano 
+instance via an included [Terraform](https://terraform.io) config.
+
+```shell
+./make.sh terraform ami-[id] subnet-XXXXXXXX sg-XXXXXXXX eu-central-1
+./make.sh ssh [instance_ip]
+```
+
+
+### Environment
+
+The subnet, security group and region can be set in your shells environment for the build 
+and test commands to use.
+
+```
+AWS_SUBNET=X
+AWS_SECURITY_GROUP=X
+AWS_REGION=X
+```
+
+
+
+## Vagrant Box
+
+The same build can be applied to produce a Vagrant box 
+
+```shell
+./make.sh vagrant
+```
+_Note:_ no guest additions are installed
+
+
+### Test
+
+Requries [vagrant](https://vagrantup.com).
+
+```shell
+./make.sh add_vagrant
+vagrant ssh
+```
+
+
+
+## VirtualBox OVF
 
 The same build can be applied to VirtualBox to produce an OVF appliance.
 
-```
+```shell
 ./make.sh virtualbox
 ```
-_Note:_ no guest additions installed
+_Note:_ no guest additions are installed
 
 
-## Test
-
-After building you can bring up the AMI on a nano instance via an included
- [Terraform](https://terraform.io) config.
-
-```
-./make.sh terraform ami-[id]
-./make.sh ssh [instance_ip]
-```
+### Test
 
 For Virtualbox you need to import the OVF and add a host only adapter, a 
 bridge adapter, or on NAT map a port to 22. Then you can ssh to it
 
-```
+```shell
 ./make.sh ssh [vbox_ip]
 ```
 
-### About
+
+## Issues
+
+### Slow VM startup
+
+Alpine 3.5 can run out of entropy making sshd startup slow: https://bugs.alpinelinux.org/issues/6635
+
+
+## About
 
 Matt Hoyle - code aatt deployable.co

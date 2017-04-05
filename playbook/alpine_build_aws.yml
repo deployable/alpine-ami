@@ -14,5 +14,5 @@
     chroot {{chroot_dir}} pip install --upgrade pip
     chroot {{chroot_dir}} pip install awscli
   tags: ["always"]
-  environment:
-    http_proxy: '{{HTTP_PROXY}}'
+  # environment:
+  #   http_proxy: '{{HTTP_PROXY}}'

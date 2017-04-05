@@ -1,9 +1,6 @@
 ---
 
 # Variables you might want to change
-- set_fact:
-    HTTP_PROXY: http://10.8.8.8:3142
-  tags: ["always"]
 
 - set_fact:
     version_major: 3
@@ -12,14 +9,20 @@
   tags: ["always"]
 
 - set_fact:
-    version: '{{version_major}}.{{version_minor}}.{{version_patch}}'
-    version_major_minor: '{{version_major}}.{{version_minor}}'
+    HTTP_PROXY: 
   tags: ["always"]
+
 
 # Don't default devices, make the user set them.
 #- set_fact:
 #    dev_alpine: sda
 #    dev_alpine_eventual: sda
+
+
+- set_fact:
+    version: '{{version_major}}.{{version_minor}}.{{version_patch}}'
+    version_major_minor: '{{version_major}}.{{version_minor}}'
+  tags: ["always"]
 
 # Not sure packer runs this like a normal playbook, so defaulting values
 # without using normal ansible precendence. Override these in the 
@@ -244,8 +247,8 @@
   get_url:    
     url: http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/main/x86_64/apk-tools-static-2.6.8-r2.apk
     dest: '{{ path_build }}/apk-tools-static-2.6.8-r2.tgz'
-  environment:
-    http_proxy: '{{HTTP_PROXY}}'
+  # environment:
+  #   http_proxy: '{{HTTP_PROXY}}'
 
 - name: extract apk static
   tags: ["always"]
@@ -256,9 +259,9 @@
 
 - name: Install packages with apk static
   tags: ["always"]
-  command: '{{path_build}}/sbin/apk.static --no-cache -X http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/main -U --allow-untrusted --root {{chroot_dir}} --initdb add alpine-base linux-virtgrsec iproute2 iptables ip6tables iputils e2fsprogs coreutils util-linux syslinux sudo bash openssh dhcpcd curl'
-  environment:
-    http_proxy: '{{HTTP_PROXY}}'
+  command: '{{path_build}}/sbin/apk.static --no-cache -X http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/main -U --allow-untrusted --root {{chroot_dir}} --initdb add alpine-base linux-virtgrsec iproute2 iptables ip6tables iputils e2fsprogs coreutils util-linux syslinux sudo bash openssh dhcpcd curl python'
+  # environment:
+  #   http_proxy: '{{HTTP_PROXY}}'
 
 #dropbear dropbear-scp
 
@@ -334,7 +337,25 @@
   tags: ["always"]
 
 
+- lineinfile:
+    regexp: rm -f "$urandom_seed" && save_seed
+    line: rm -f "$urandom_seed""]
+
 # sshd
+- name: Create some dodgy entropy for alpine, cert gen
+  tags: ["always"]
+  lineinfile:
+    dest: '{{chroot_dir}}/etc/init.d/sshd'
+    line: '               find / 2>/dev/null 1>/dev/null'
+    insertbefore: 'ssh-keygen -A \|\| return 1'
+
+- name: Create some dodgy entropy for alpine, ssh startup
+  tags: ["always"]
+  lineinfile:
+    dest: '{{chroot_dir}}/etc/init.d/sshd'
+    line: '        if [ "${RC_CMD}" = "start" ] ; then find / 2>/dev/null 1>/dev/null; fi'
+    insertbefore: 'SSHD_BINARY\}" -t '
+
 - lineinfile:
     dest: '{{chroot_dir}}/etc/ssh/sshd_config'
     line: PermitTunnel yes

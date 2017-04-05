@@ -2,17 +2,19 @@
 
 # Run the various things
 
-# Setting DEBUG will turn debug on around the place.
+# Setting `DEBUG` will turn debug on around the place.
 
 #    DEBUG=1 ./make.sh ami
 
-# Setting PACKER_ARGS will pass them directly to `packer`.
+# Setting `PACKER_ARGS` will pass them directly to `packer`.
 
-#    DEBUG=1 ./make.sh ami
+#    PACKER_ARGS="-debug" ./make.sh ami
+
+# Same for `SSH_ARGS`, `VAGRANT_ARGS`, `TERRAFORM_ARGS`
 
 
 # ## Setup
-set -uex
+set -ue
 
 rundir=$(cd -P -- "$(dirname -- "$0")" && printf '%s\n' "$(pwd -P)")
 canonical="$rundir/$(basename -- "$0")"
@@ -28,19 +30,44 @@ if [ -z "$cmd" ]; then
   cmd=build
 fi
 
-if [ -z "${PACKER_ARGS:-}" ]; then
-  PACKER_ARGS=''
-fi
+# AWS Environment vars
+AWS_SUBNET="${AWS_SUBNET:-}"
+AWS_SECURITY_GROUP="${AWS_SECURITY_GROUP:-}"
+AWS_REGION=${AWS_REGION:-ap-southeast-2}
+AWS_AMI=${AWS_AMI:-ami-881317eb}
 
-if [ -z "${SSH_ARGS:-}" ]; then
-  SSH_ARGS=''
-fi
+# Push args to underlying utilities
+PACKER_ARGS="${PACKER_ARGS:-}"
+TERRAFORM_ARGS="${TERRAFORM_ARGS:-}"
+VAGRANT_ARGS="${VAGRANT_ARGS:-}"
+SSH_ARGS="${SSH_ARGS:-}"
 
 # DEBUG environment var
 if [ -n "${DEBUG:-}" ]; then
+  set -x
   PACKER_ARGS="$PACKER_ARGS -debug"
+  TF_LOG=debug
+  VAGRANT_ARGS="$VAGRANT_ARGS --debug"
   SSH_ARGS="$SSH_ARGS -v"
 fi
+
+# Debian AMI lookup from region
+
+get_ami_from_region(){
+  local_region=$1
+  awk '
+    BEGIN { f=1; }
+    { 
+      if ($1 == "'$local_region'" ){ 
+        print $2;
+        f=0;
+        exit f; 
+      }
+    }
+    END{ exit f; }
+  ' .ami-env
+}
+
 
 # ## Builds
 
@@ -82,8 +109,19 @@ build_vagrant(){
 }
 
 build_ami(){
+  local_subnet=${1:-$AWS_SUBNET}
+  local_group=${2:-$AWS_SECURITY_GROUP}
+  local_region=${3:-${AWS_REGION:-ap-southeast-2}}
+  local_ami=$(get_ami_from_region "$local_region")
+
   build_sshkeys_conditional
-  packer build $PACKER_ARGS debian-alpine.json
+  
+  packer build $PACKER_ARGS \
+    -var subnet=$local_subnet \
+    -var security_group=$local_group \
+    -var regions=$local_region \
+    -var ami=$local_ami \
+    debian-alpine.json
 }
 
 build_sshkeys_conditional(){
@@ -111,6 +149,12 @@ run_vagrant_add(){
   vagrant box add ./packer_virtualbox-iso_virtualbox.box --force --name dply/alpine_ami
 }
 
+run_vagrant(){
+  run_vagrant_add
+  vagrant destroy --force
+  vagrant up
+}
+
 run_ami_ssh(){
   local_ip=$1
   ssh $SSH_ARGS -i ec2_amazon-ebssurrogate.pem admin@$local_ip
@@ -125,21 +169,30 @@ run_ssh(){
       break
     fi
     echo retrying
-    sleep 5
+    sleep 10
   done
   set -e
 }
 
 run_terraform(){
   local_ami=$1
+  local_subnet=${2:-$AWS_SUBNET}
+  local_group=${3:-$AWS_SECURITY_GROUP}
+  local_region=${4:-${AWS_REGION:-ap-southeast-2}}
+
   cd "$rundir"/test
-  terraform apply -var test_ami=$local_ami
+  terraform apply $TERRAFORM_ARGS \
+    -var test_ami=$local_ami \
+    -var subnet="$local_subnet" \
+    -var security_group="$local_group" \
+    -var region="$local_region"
 }
 
 run_help(){
   echo 'Help:'
   echo ' build | aws      Build the aws ami'
-  echo ' virtualbox       Build the ova'
+  echo ' vagrant          Build the .box'
+  echo ' virtualbox       Build the .ovf'
   echo ' keys             Generate ssh keys'
   echo ' ssh [ip]         SSH with keys to ip'
   echo ' terraform [ami]  Bring up new ami with terraform'
