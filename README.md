@@ -58,9 +58,9 @@ The subnet, security group and region can be set in your shells environment for 
 and test commands to use.
 
 ```
-AWS_SUBNET=X
-AWS_SECURITY_GROUP=X
-AWS_REGION=X
+export AWS_SUBNET=X
+export AWS_SECURITY_GROUP=X
+export AWS_REGION=X
 ```
 
 
