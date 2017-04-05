@@ -5,7 +5,7 @@ with [Packer](https://www.packer.io) and [Ansible](https://www.ansible.com).
 
 
 
-## Setup
+## Install
 
 The build requires `packer` and `ansible-playbook` to be installed.
 
@@ -25,6 +25,10 @@ Then clone the repo
 git clone https://github.com/deployable/alpine-ami && cd alpine-ami
 ```
 
+
+### Testing
+
+The included uses terraform to launch the instance. 
 
 
 ## Build AMI
@@ -50,7 +54,6 @@ instance via an included [Terraform](https://terraform.io) config.
 ./make.sh test ami-[id] subnet-XXXXXXXX sg-XXXXXXXX eu-central-1
 ./make.sh ssh [instance_ip]
 ./make.sh test_destroy ami-[id] subnet-XXXXXXXX sg-XXXXXXXX eu-central-1
-
 ```
 
 
@@ -67,19 +70,19 @@ export AWS_REGION=X
 
 
 
-## Vagrant Box
+## Build Vagrant Box
 
 The same build can be applied to produce a Vagrant box 
 
 ```shell
 ./make.sh vagrant
 ```
-_Note:_ no guest additions are installed
+_Note:_ The guest additions are not installed
 
 
 ### Test
 
-Requries [vagrant](https://vagrantup.com).
+Requries [Vagrant](https://vagrantup.com).
 
 ```shell
 ./make.sh add_vagrant
@@ -88,23 +91,26 @@ vagrant ssh
 
 
 
-## VirtualBox OVF
+## Build VirtualBox OVF
 
 The same build can be applied to VirtualBox to produce an OVF appliance.
 
 ```shell
 ./make.sh virtualbox
 ```
-_Note:_ no guest additions are installed
+_Note:_ The guest additions are not installed
 
 
 ### Test
 
 For Virtualbox you need to import the OVF and add a host only adapter, a 
-bridge adapter, or on NAT map a port to 22. Then you can ssh to it
+bridge adapter, or NAT mapping to port to 22. Then you can ssh to it
 
 ```shell
-./make.sh ssh [vbox_ip]
+VBoxManage import ./output-vbox/alpine-vbox.ovf 
+VBoxManage modifyvm alpine-vbox --natpf1 "tcp-port,tcp,,2202,,22"
+VBoxManage startvm alpine-vbox --type separate
+SSH_ARGS="-p 2202" ./make.sh ssh localhost
 ```
 
 
