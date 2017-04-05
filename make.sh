@@ -20,15 +20,15 @@ rundir=$(cd -P -- "$(dirname -- "$0")" && printf '%s\n' "$(pwd -P)")
 canonical="$rundir/$(basename -- "$0")"
 cd "$rundir"
 
+
+# Get the command, or default it
 cmd=${1:-}
 if [ -n "$cmd" ]; then
   shift
-fi
-
-# Default the command
-if [ -z "$cmd" ]; then
+else 
   cmd=build
 fi
+
 
 # AWS Environment vars
 AWS_SUBNET="${AWS_SUBNET:-}"
@@ -50,6 +50,7 @@ if [ -n "${DEBUG:-}" ]; then
   VAGRANT_ARGS="$VAGRANT_ARGS --debug"
   SSH_ARGS="$SSH_ARGS -v"
 fi
+
 
 # Debian AMI lookup from region
 
@@ -215,6 +216,7 @@ run_help(){
   echo ' test_destroy [ami] [subnet] [sg] [region]'
   echo '                            Destroy the terraform resource'
 }
+
 
 # ## Shortcuts
 
