@@ -7,7 +7,13 @@ with [Packer](https://www.packer.io) and [Ansible](https://www.ansible.com).
 
 ## Install
 
-The build requires `packer` and `ansible-playbook` to be installed.
+Clone the repo
+
+```shell
+git clone https://github.com/deployable/alpine-ami && cd alpine-ami
+```
+
+The build requires `packer` and `ansible-playbook` to be run.
 
 On a mac, use [brew](https://brew.sh).
 ```shell
@@ -19,16 +25,10 @@ On Linux, [download](https://www.packer.io/downloads.html) or check your package
 manager. Ansible is available via `pip install ansible`, on epel in RHEL and on 
 `ppa:ansible/ansible` in Ubuntu.
 
-Then clone the repo
-
-```shell
-git clone https://github.com/deployable/alpine-ami && cd alpine-ami
-```
-
 
 ### Testing
 
-The included uses terraform to launch the instance. 
+Included is a [Terraform](https://terraform.io) config to launch the instance. 
 
 
 ## Build AMI
