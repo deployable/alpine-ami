@@ -1,6 +1,9 @@
 ---
 
 # Variables you might want to change
+- set_fact:
+    HTTP_PROXY: http://10.8.8.8:3142
+  tags: ["always"]
 
 - set_fact:
     version_major: 3
@@ -89,7 +92,7 @@
 
 
 - name: setup alpine disk
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
   shell: |
     set -uex
     parted /dev/{{dev_alpine}} -s mktable msdos
@@ -101,7 +104,7 @@
     chdir: '{{ path_build }}'
 
 - name: setup alpine disk swap
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
   shell: |
     set -uex
     parted /dev/{{dev_alpine}} -sa optimal -- mkpart primary linux-swap {{dev_alpine_root_end}} {{dev_alpine_swap_end}}
@@ -113,7 +116,7 @@
 #setup-disk -m sys -k virtgrsec -s 0 -v /mnt/target /dev/sda
 
 - name: mount alpine disk
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
   shell: |
     mkdir target
     mkdir source
@@ -146,25 +149,25 @@
 
 - shell: 'blkid -o value /dev/{{dev_alpine}}2'
   register: blkid_dev
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
 
 - debug: var=blkid_dev.stdout_lines
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
 
 - set_fact:
     blk_uuid: '{{ blkid_dev.stdout_lines[0] }}'
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
 
 # Chroot
 
 - set_fact:
     chroot_dir: '{{path_build}}/target'
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
 
 # - get_url:    
 #     url: http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/releases/x86_64/alpine-minirootfs-{{version}}-x86_64.tar.gz
 #     dest: '{{ path_build }}/alpine-minirootfs-3.5.2-x86_64.tar.gz'
-#   tags: ["surrogate","aws","vbox"]
+#   tags: ["always"]
 
 # - unarchive:
 #     src: '{{ path_build }}/alpine-minirootfs-3.5.2-x86_64.tar.gz'
@@ -175,7 +178,7 @@
     src: chroot_run.sh
     dest: '{{chroot_dir}}/chroot_run.sh'
     mode: 0755
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
 
 - file:
     path: '{{chroot_dir}}{{item}}'
@@ -190,10 +193,10 @@
     - '/proc'
     - '/sys'
     - '/dev'
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
 
 - name: system setup for chroot
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
   shell: |
     set -ue
     mount -t proc none {{chroot_dir}}/proc
@@ -207,16 +210,16 @@
     src: ./etc-init.d-network-debug
     dest: '{{chroot_dir}}/etc/init.d/netdebug'
     mode: 0755
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
 
 - name: 'template /etc/apk/repositories etc-apk-repositories.j2'
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
   template: 
     src: etc-apk-repositories.j2
     dest: '{{chroot_dir}}/etc/apk/repositories'
 
 - name: chroot system setup
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
   shell: |
     set -ue
     # Config
@@ -237,26 +240,30 @@
 
 
 - name: get apk static for debian
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
   get_url:    
     url: http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/main/x86_64/apk-tools-static-2.6.8-r2.apk
     dest: '{{ path_build }}/apk-tools-static-2.6.8-r2.tgz'
+  environment:
+    http_proxy: '{{HTTP_PROXY}}'
 
 - name: extract apk static
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
   unarchive:
     src: '{{path_build}}/apk-tools-static-2.6.8-r2.tgz'
     dest: '{{path_build}}'
     remote_src: yes
 
 - name: Install packages with apk static
-  tags: ["surrogate","aws","vbox"]
-  command: '{{path_build}}/sbin/apk.static --no-cache -X http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/main -U --allow-untrusted --root {{chroot_dir}} --initdb add alpine-base linux-virtgrsec iproute2 iptables ip6tables iputils e2fsprogs coreutils util-linux syslinux sudo bash openssh dhcpcd'
+  tags: ["always"]
+  command: '{{path_build}}/sbin/apk.static --no-cache -X http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/main -U --allow-untrusted --root {{chroot_dir}} --initdb add alpine-base linux-virtgrsec iproute2 iptables ip6tables iputils e2fsprogs coreutils util-linux syslinux sudo bash openssh dhcpcd curl'
+  environment:
+    http_proxy: '{{HTTP_PROXY}}'
 
 #dropbear dropbear-scp
 
 - name: remove kernel bits
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
   file:
     path: '{{item}}'
     state: absent
@@ -278,13 +285,13 @@
 
 
 - name: 'template /etc/fstab etc-fstab.j2'
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
   template: 
     src: etc-fstab.j2
     dest: '{{chroot_dir}}/etc/fstab'
 
 - name: 'template /boot/extlinux.conf extlinux.conf.j2'
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
   template: 
     src: extlinux.conf.j2
     dest: '{{chroot_dir}}/boot/extlinux.conf'
@@ -302,40 +309,52 @@
   command: chroot {{chroot_dir}} extlinux --install /boot
 
 - name: chroot
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
   command: chroot {{chroot_dir}} /chroot_run.sh
   args:
     chdir: '{{path_build}}'
 
 - name: 'template /etc/hosts etc-hosts.j2'
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
   template:
     src: ./etc-hosts.j2
     dest: '{{chroot_dir}}/etc/hosts'
 
 - name: 'template /etc/network/interfaces etc-network-interfaces.j2'
-  tags: ["surrogate","aws","vbox"]
+  tags: ["always"]
   template:
     src: ./etc-network-interfaces.j2
     dest: '{{chroot_dir}}/etc/network/interfaces'
 
-- lineinfile:
+- name: Turn on OpenRC logging (not dates still!)
+  lineinfile:
     dest: '{{chroot_dir}}/etc/rc.conf'
-    regex: ^\s*#?\s*rc_logger=
+    regexp: ^\s*#?\s*rc_logger=
     line: rc_logger="YES"
+  tags: ["always"]
 
+
+# sshd
 - lineinfile:
     dest: '{{chroot_dir}}/etc/ssh/sshd_config'
     line: PermitTunnel yes
+  tags: ["always"]
 - lineinfile:
     dest: '{{chroot_dir}}/etc/ssh/sshd_config'
     line: PasswordAuthentication no
+  tags: ["aws"]
 - lineinfile:
     dest: '{{chroot_dir}}/etc/ssh/sshd_config'
     line: PermitRootLogin no
+  tags: ["always"]
+- lineinfile:
+    dest: '{{chroot_dir}}/etc/ssh/sshd_config'
+    line: UseDNS no
+  tags: ["always"]
 
-- name: 'lineinfile /etc/sudoers'
-  tags: ["surrogate","aws","vbox"]
+
+- name: 'lineinfile /etc/sudoers base user'
+  tags: ["always"]
   lineinfile:
     dest: '{{chroot_dir}}/etc/sudoers'
     line: '{{user_base}} ALL = NOPASSWD: ALL'

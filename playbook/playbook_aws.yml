@@ -11,3 +11,4 @@
 
   tasks:
     - include: alpine_build.yml
+    - include: alpine_build_aws.yml

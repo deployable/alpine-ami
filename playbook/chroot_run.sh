@@ -27,12 +27,14 @@ rc-update add savecache shutdown
 #pip install --upgrade pip
 #pip install awscli
 
-adduser -D -h /home/admin admin
-pwd="$(uuidgen)"
-echo "$pwd
-$pwd" | passwd admin
-pwd="$(uuidgen)"
-echo -e "$pwd
-$pwd" | passwd root
+
+adduser -D -h /home/admin  -u 10006 admin
+
+# pwd="$(uuidgen)"
+pwd="admin"
+printf "%s\n%s\n" "$pwd" "$pwd" | passwd admin
+
+# pwd="$(uuidgen)"
+# printf "%s\n%s\n" "$pwd" "$pwd" | passwd root
 
 df -h

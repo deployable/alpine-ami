@@ -3,31 +3,32 @@
 # Variables you might want to change
 
 
-- set_fact:
-    path_build: "{{ path_build | default('/tmp') }}"
-  tags: ["always"]
+# - set_fact:
+#     path_build: "{{ path_build | default('/tmp') }}"
+#   tags: ["always"]
 
-- set_fact:
-    chroot_dir: '{{path_build}}/target'
-  tags: ["always"]
+# - set_fact:
+#     chroot_dir: '{{path_build}}/target'
+#   tags: ["always"]
 
 - shell: |
-    chroot /tmp/target adduser -D -h /home/vagrant vagrant
-    chroot /tmp/target sh -c 'echo "vagrant\nvagrant" | passwd vagrant'
+    chroot {{chroot_dir}} adduser -D -h /home/vagrant -u 10005 vagrant
+    chroot {{chroot_dir}} sh -c 'printf "%s\n%s\n" vagrant vagrant | passwd vagrant'
+    chroot {{chroot_dir}} sh -c 'uuid=$(uuidgen); printf "%s\n%s\n" "${uuid}" "${uuid}" | passwd root'
   tags: ["always"]
 
 - file:
     state: directory 
     dest: '{{chroot_dir}}/home/vagrant/.ssh'
     mode: 0700
-    user: vagrant
+    owner: 10005
   tags: ["always"]
 
 - get_url:
-    src: https://raw.github.com/mitchellh/vagrant/master/keys/vagrant.pub
+    url: https://raw.githubusercontent.com/mitchellh/vagrant/master/keys/vagrant.pub
     dest: '{{chroot_dir}}/home/vagrant/.ssh/authorized_keys'
     mode: 0600
-    user: vagrant
+    owner: 10005
   tags: ["always"]
 
 - name: 'lineinfile /etc/sudoers'
@@ -36,3 +37,8 @@
     line: 'vagrant ALL = NOPASSWD: ALL'
   tags: ["always"]
 
+- shell: chroot {{chroot_dir}} sh -c 'touch second_to_last'
+  tags: ["always"]
+
+- shell: touch {{chroot_dir}}/last
+  tags: ["always"]

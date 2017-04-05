@@ -101,6 +101,16 @@ build_sshkeys(){
 
 # ## Run
 
+run_vm_destroy(){
+  local_vm=$1
+  VBoxManage controlvm $local_vm poweroff
+  VBoxManage unregistervm $local_vm --delete
+}
+
+run_vagrant_add(){
+  vagrant box add ./packer_virtualbox-iso_virtualbox.box --force --name dply/alpine_ami
+}
+
 run_ami_ssh(){
   local_ip=$1
   ssh $SSH_ARGS -i ec2_amazon-ebssurrogate.pem admin@$local_ip
@@ -128,7 +138,7 @@ run_terraform(){
 
 run_help(){
   echo 'Help:'
-  echo ' build | ami      Build the ami'
+  echo ' build | aws      Build the aws ami'
   echo ' virtualbox       Build the ova'
   echo ' keys             Generate ssh keys'
   echo ' ssh [ip]         SSH with keys to ip'
@@ -138,8 +148,9 @@ run_help(){
 # ## Shortcuts
 
 case $cmd in
-  'build'|'ami')  build_ami "$@";;
+  'build'|'aws')  build_ami "$@";;
   'builder')      build_virtualbox_builder "$@";;
+  'vbox')         build_virtualbox "$@";;
   'virtualbox')   build_virtualbox "$@";;
   'vagrant')      build_vagrant "$@";;
   'keys')         build_sshkeys "$@";;

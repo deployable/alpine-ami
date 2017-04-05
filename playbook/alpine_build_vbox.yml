@@ -1,8 +1,5 @@
 ---
 
-# Variables you might want to change
-
-
 - set_fact:
     path_build: "{{ path_build | default('/tmp') }}"
   tags: ["always"]
@@ -12,7 +9,5 @@
   tags: ["always"]
 
 - shell: |
-    uuid=$(uuidgen)
-    chroot /tmp/target sh -c "printf \"${uuid}\n${uuid}\" | passwd root"
+    chroot /tmp/target sh -c 'uuid=$(uuidgen); printf "${uuid}\n${uuid}\n" | passwd root'
   tags: ["always"]
-

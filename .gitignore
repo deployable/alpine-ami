@@ -4,6 +4,7 @@ ec2_amazon-ebssurrogate.pem
 output-virtualbox-iso/
 output-builder/
 output-vagrant/
+packer_virtualbox-iso_virtualbox.box
 output-vbox/
 .vagrant/
 

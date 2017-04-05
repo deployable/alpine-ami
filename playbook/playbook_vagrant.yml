@@ -12,7 +12,14 @@
   tasks:
 
     - include: alpine_build.yml
+
     - include: alpine_build_vagrant.yml
 
-    - name: 'shutdown vbox'
-      command: halt -d 5
+    - command: sync
+      tags: ['always']
+    - command: sync
+      tags: ['always']
+    - command: sleep 5
+      tags: ['always']
+    - command: halt
+      tags: ['always']
