@@ -1,6 +1,6 @@
 # Alpine Linux AMI Build
 
-Build an [Alpine Linux](https://www.alpinelinux.org) EC2 AMI with or OVA
+Build an [Alpine Linux](https://www.alpinelinux.org) EC2 AMI or OVA
 with [Packer](https://www.packer.io) and [Ansible](https://www.ansible.com).
 
 
@@ -13,7 +13,7 @@ Clone the repo
 git clone https://github.com/deployable/alpine-ami && cd alpine-ami
 ```
 
-The build requires `packer` and `ansible-playbook` to be run.
+The build requires `packer` and `ansible-playbook` to run.
 
 On a mac, use [brew](https://brew.sh).
 ```shell
