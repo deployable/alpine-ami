@@ -1,0 +1,41 @@
+---
+
+# - set_fact:
+#     path_build: "{{ path_build | default('/tmp') }}"
+#   tags: ["always"]
+
+# - set_fact:
+#     chroot_dir: '{{path_build}}/target'
+#   tags: ["always"]
+
+- command: apk add mkinitfs
+  tags: ["always"]
+
+- name: lineinfile /etc/mkinitfs/features.d/network.modules virtio
+  lineinfile:
+    dest: /etc/mkinitfs/features.d/network.modules
+    line: kernel/drivers/net/virtio_net.ko
+  tags: ["always"]
+
+- name: lineinfile /etc/mkinitfs/features.d/dhcp.files script
+  lineinfile:
+    dest: /etc/mkinitfs/features.d/dhcp.files
+    line: /usr/share/udhcpc/default.script
+    create: true
+  tags: ["always"]
+
+- name: lineinfile /etc/mkinitfs/features.d/dhcp.modules af_packet
+  lineinfile:
+    dest: /etc/mkinitfs/features.d/dhcp.modules
+    line: kernel/net/packet/af_packet.ko
+    create: true
+  tags: ["always"]
+
+- name: lineinfile /etc/mkinitfs/mkinitfs.conf featres
+  lineinfile:
+    dest: /etc/mkinitfs/mkinitfs.conf
+    line: features="ata base bootchart cramfs ext2 ext3 ext4 xfs keymap kms raid scsi usb virtio squashfs network dhcp"
+  tags: ["always"]
+
+- command: mkinitfs -o /root/pxerd
+  tags: ["always"]

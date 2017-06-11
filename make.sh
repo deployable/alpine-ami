@@ -72,6 +72,8 @@ get_ami_from_region(){
 
 # ## Builds
 
+# Build a base ovf to build virtualbox/vagrant boxes with via the
+# [`virtualbox-ovf`](https://www.packer.io/docs/builders/virtualbox-ovf.html) builder.
 build_virtualbox_builder(){
   build_sshkeys_conditional
   set +e
@@ -81,11 +83,8 @@ build_virtualbox_builder(){
   packer build $PACKER_ARGS alpine-virtualbox-builder.json
 }
 
+# Build a virtualbox .ovf from iso
 build_virtualbox(){
-  if [ ! -f ./output-builder//alpine-vbox-builder.ovf ]; then
-    echo "need to run 'build_virtualbox_builder'"
-    return 1
-  fi
   build_sshkeys_conditional
   set +e
   pkill -f 'packer build alpine-vagrant.json'
@@ -95,11 +94,8 @@ build_virtualbox(){
   packer build $PACKER_ARGS alpine-virtualbox.json
 }
 
+# Build a vagrant .box from iso
 build_vagrant(){
-  if [ ! -f ./output-builder//alpine-vbox-builder.ovf ]; then
-    echo "need to run 'build_virtualbox_builder'"
-    return 1
-  fi
   build_sshkeys_conditional
   set +e
   pkill -f 'packer build alpine-vagrant.json'
@@ -109,6 +105,22 @@ build_vagrant(){
   packer build $PACKER_ARGS alpine-vagrant.json
 }
 
+# Build a pxe initrd frome the virtualbox builder ovf.
+build_pxe(){
+  if [ ! -f ./output-builder-3.5.2/alpine-vbox-builder-3.5.2.ovf ]; then
+    echo "need to run 'build_virtualbox_builder'"
+    return 1
+  fi
+  build_sshkeys_conditional
+  set +e
+  pkill -f 'packer build alpine-pxe.json'
+  set -e
+  packer build -force $PACKER_ARGS alpine-pxe.json
+}
+
+
+# Build an AWS ami in a region
+# requires a subnet and sec group to build in.
 build_ami(){
   local_subnet=${1:-$AWS_SUBNET}
   local_group=${2:-$AWS_SECURITY_GROUP}
@@ -125,6 +137,7 @@ build_ami(){
     debian-alpine.json
 }
 
+# Create an ssh key if it doesn't exist
 build_sshkeys_conditional(){
   if [ ! -f "$rundir"/playbook/id_rsa_alpine ]; then
     build_sshkeys
@@ -156,11 +169,13 @@ run_vagrant(){
   vagrant up
 }
 
+# Connect to an ec2 build box
 run_ami_ssh(){
   local_ip=$1
   ssh $SSH_ARGS -i ec2_amazon-ebssurrogate.pem admin@$local_ip
 }
 
+# Connect to a build box
 run_ssh(){
   local_ip=$1
   set +e
@@ -226,6 +241,7 @@ case $cmd in
   'vbox')         build_virtualbox "$@";;
   'virtualbox')   build_virtualbox "$@";;
   'vagrant')      build_vagrant "$@";;
+  'pxe')          build_pxe "$@";;
   'keys')         build_sshkeys "$@";;
   'ssh')          run_ssh "$@";;
   'test')         run_terraform "$@";;

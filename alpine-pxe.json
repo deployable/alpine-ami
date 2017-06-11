@@ -1,0 +1,33 @@
+{
+  "builders": [{
+    "type"         : "virtualbox-ovf",
+    "source_path"  : "output-builder-3.5.2/alpine-vbox-builder-3.5.2.ovf",
+
+    "ssh_username" : "admin",
+    "ssh_password" : "admin",
+
+    "post_shutdown_delay": "30s",
+    "boot_wait": "5s",
+
+    "skip_export": true,
+
+    "boot_command": [
+      "asdf sdfg qwer zxcv lkjh oiuy mnbv"
+    ],
+
+
+
+    "vm_name": "alpine_pxe_{{isotime \"20060102-150405\"}}",
+    "output_directory": "output-pxe-3.5.2"
+
+  }],
+  "provisioners": [
+    {
+      "type": "ansible",
+      "playbook_file": "./playbook/playbook_pxe.yml",
+      "groups": "alpine",
+      "extra_arguments": [ "-vv", "-t", "pxe" ]
+    }
+  ]
+}
+

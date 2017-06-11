@@ -39,11 +39,11 @@
       "--manifest",
       "--vsys", "0",
       "--description", "Alpine Linux 3.5.2 Builder",
-      "--version", "{{user `vm_version`}}"
+      "--version", "3.5.2-{{user `vm_version`}}"
     ],
 
-    "vm_name": "alpine-vbox-builder",
-    "output_directory": "output-builder"
+    "vm_name": "alpine-vbox-builder-3.5.2",
+    "output_directory": "output-builder-3.5.2"
 
   }],
   "provisioners": [
