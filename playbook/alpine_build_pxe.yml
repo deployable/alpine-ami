@@ -44,6 +44,6 @@
 - name: export build initrd from remote to local
   fetch:
     src: /root/pxerd
-    dest: ../output-pxe-3.5.2/pxerd
+    dest: ../output-pxe-3.5.2/alpine-3.5-pxerd
     flat: true
   tags: ["always"]
