@@ -42,8 +42,7 @@
       "--version", "3.5.2-{{user `vm_version`}}"
     ],
 
-    "vm_name": "alpine-vagrant",
-    "output_directory": "output-vagrant"
+    "vm_name": "alpine-vagrant-3.5.2"
 
   }],
   "provisioners": [
@@ -54,6 +53,11 @@
       "extra_arguments": [ "-vv", "-t", "vbox"]
     }
   ],
-  "post-processors": ["vagrant"]
+  "post-processors": [
+    {
+      "type": "vagrant",
+      "output": "output-vagrant-alpine-3.5.2.box"
+    }
+  ]
 }
 

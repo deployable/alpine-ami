@@ -160,7 +160,7 @@ run_vm_destroy(){
 }
 
 run_vagrant_add(){
-  vagrant box add ./packer_virtualbox-iso_virtualbox.box --force --name dply/alpine_ami
+  vagrant box add output-vagrant-alpine-3.5.2.box --force --name dply/alpine_ami
 }
 
 run_vagrant(){
