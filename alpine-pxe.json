@@ -7,15 +7,13 @@
     "ssh_password" : "admin",
 
     "post_shutdown_delay": "30s",
-    "boot_wait": "5s",
+    "boot_wait": "6s",
 
     "skip_export": true,
 
     "boot_command": [
-      "asdf sdfg qwer zxcv lkjh oiuy mnbv"
+      "some rng interrupts {{uuid}}<enter>"
     ],
-
-
 
     "vm_name": "alpine_pxe_{{isotime \"20060102-150405\"}}",
     "output_directory": "output-pxe-3.5.2"

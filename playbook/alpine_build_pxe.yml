@@ -37,5 +37,13 @@
     line: features="ata base bootchart cramfs ext2 ext3 ext4 xfs keymap kms raid scsi usb virtio squashfs network dhcp"
   tags: ["always"]
 
-- command: mkinitfs -o /root/pxerd
+- name: command mkinitfs /root/pxerd
+  command: mkinitfs -o /root/pxerd
+  tags: ["always"]
+
+- name: export build initrd from remote to local
+  fetch:
+    src: /root/pxerd
+    dest: ../output-pxe-3.5.2/pxerd
+    flat: true
   tags: ["always"]
