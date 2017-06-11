@@ -114,6 +114,13 @@ SSH_ARGS="-p 2202" ./make.sh ssh localhost
 ```
 
 
+## Build PXE initrd
+
+```shell
+./make.sh pxe
+```
+The initrd is exported to `output-pxe-3.5.2/pxerd`
+
 ## Issues
 
 ### Slow VM startup
