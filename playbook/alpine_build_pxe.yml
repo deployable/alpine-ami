@@ -8,7 +8,7 @@
 #     chroot_dir: '{{path_build}}/target'
 #   tags: ["always"]
 
-- command: apk add mkinitfs
+- command: apk add mkinitfs squashfs-tools
   tags: ["always"]
 
 - name: lineinfile /etc/mkinitfs/features.d/network.modules virtio
@@ -37,13 +37,31 @@
     line: features="ata base bootchart cramfs ext2 ext3 ext4 xfs keymap kms raid scsi usb virtio squashfs network dhcp"
   tags: ["always"]
 
-- name: command mkinitfs /root/pxerd
-  command: mkinitfs -o /root/pxerd
+# squashfs
+- name: export build initrd from remote to local
+  command: mksquashfs modules/ /root/alpine-3.5-modules.squashfs -comp xz
+  args:
+    chdir: /lib
   tags: ["always"]
 
 - name: export build initrd from remote to local
   fetch:
-    src: /root/pxerd
+    src: /root/alpine-3.5-modules.squashfs
+    dest: ../output-pxe-3.5.2/alpine-3.5-modules.squashfs
+    flat: true
+  tags: ["always"]
+
+# initrd
+- name: command mkinitfs /root/alpine-3.5-pxerd
+  command: mkinitfs -o /root/alpine-3.5-pxerd
+  tags: ["always"]
+
+- name: export build initrd from remote to local
+  fetch:
+    src: /root/alpine-3.5-pxerd
     dest: ../output-pxe-3.5.2/alpine-3.5-pxerd
     flat: true
   tags: ["always"]
+
+
+  
