@@ -1,67 +1,166 @@
 ---
 
 # - set_fact:
-#     path_build: "{{ path_build | default('/tmp') }}"
-#   tags: ["always"]
-
-# - set_fact:
 #     chroot_dir: '{{path_build}}/target'
 #   tags: ["always"]
 
+- name: set_fact kernel vanilla
+  set_fact:
+    kernel_variant: vanilla
+    hostname: alpxe
+  tags: ["always"]
+
+- name: remove kernel bits
+  tags: ["always"]
+  file:
+    path: '{{chroot_dir}}'
+    state: absent
+
+- name: Install packages with apk
+  tags: ["always"]
+  command: 'apk --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/main --update-cache --allow-untrusted --root {{chroot_dir}} --initdb add alpine-base linux-{{kernel_variant}} iproute2 e2fsprogs syslinux sudo bash openssh dhcpcd curl parted sudo debootstrap'
+  environment:
+    http_proxy: '{{HTTP_PROXY}}'
+
+- name: remove kernel bits
+  tags: ["always"]
+  file:
+    path: '{{item}}'
+    state: absent
+  with_items:
+    - '{{chroot_dir}}/boot/libutil.c32'
+    - '{{chroot_dir}}/boot/mboot.c32'
+    - '{{chroot_dir}}/boot/menu.c32'
+    - '{{chroot_dir}}/boot/vesamenu.c32'
+    - '{{chroot_dir}}/boot/extlinux.conf.old'
+    - '{{chroot_dir}}/lib/firmware/radeon'
+    - '{{chroot_dir}}/lib/firmware/nvidia'
+    - '{{chroot_dir}}/lib/firmware/rtlwifi'
+    - '{{chroot_dir}}/lib/firmware/amdgpu'
+#    - '{{chroot_dir}}/lib/modules/4.9.30/kernel/drivers'
+
+- name: chroot system setup
+  tags: ["always"]
+  shell: |
+    set -ue
+    # Config
+    echo "ipv6" >> {{chroot_dir}}/etc/modules
+    echo "{{hostname}}" > {{chroot_dir}}/etc/hostname
+    mkdir -p {{chroot_dir}}/home/{{user_base}}/.ssh
+    echo '{{pubkey}}' > {{chroot_dir}}/home/{{user_base}}/.ssh/authorized_keys
+    echo 'alpine pxe' > {{chroot_dir}}/etc/motd
+  args:
+    chdir: '{{path_build}}'
+
+- name: 'lineinfile /etc/sudoers base user'
+  tags: ["always"]
+  lineinfile:
+    dest: '{{chroot_dir}}/etc/sudoers'
+    line: '{{user_base}} ALL = NOPASSWD: ALL'
+
+- lineinfile:
+    dest: '{{chroot_dir}}/etc/ssh/sshd_config'
+    line: UseDNS no
+  tags: ["always"]
+
+- name: chroot add user admin
+  command: chroot {{chroot_dir}} adduser -D -h /home/admin  -u 10006 admin
+  tags: ["always"]
+
+- name: chroot passwd admin
+  command: chroot {{chroot_dir}} printf "%s\n%s\n" "admin" "admin" | passwd admin
+  tags: ["always"]
+
+
+ # Packaging
+    
 - command: apk add mkinitfs squashfs-tools
   tags: ["always"]
 
 - name: lineinfile /etc/mkinitfs/features.d/network.modules virtio
   lineinfile:
-    dest: /etc/mkinitfs/features.d/network.modules
+    dest: '/etc/mkinitfs/features.d/network.modules'
     line: kernel/drivers/net/virtio_net.ko
   tags: ["always"]
 
 - name: lineinfile /etc/mkinitfs/features.d/dhcp.files script
   lineinfile:
-    dest: /etc/mkinitfs/features.d/dhcp.files
+    dest: '/etc/mkinitfs/features.d/dhcp.files'
     line: /usr/share/udhcpc/default.script
+    create: true
+  tags: ["always"]
+
+- name: lineinfile /etc/mkinitfs/features.d/base.files script
+  lineinfile:
+    dest: '/etc/mkinitfs/features.d/base.files'
+    line: /sbin/init
     create: true
   tags: ["always"]
 
 - name: lineinfile /etc/mkinitfs/features.d/dhcp.modules af_packet
   lineinfile:
-    dest: /etc/mkinitfs/features.d/dhcp.modules
+    dest: '/etc/mkinitfs/features.d/dhcp.modules'
     line: kernel/net/packet/af_packet.ko
     create: true
   tags: ["always"]
 
 - name: lineinfile /etc/mkinitfs/mkinitfs.conf featres
   lineinfile:
-    dest: /etc/mkinitfs/mkinitfs.conf
+    dest: '/etc/mkinitfs/mkinitfs.conf'
     line: features="ata base bootchart cramfs ext2 ext3 ext4 xfs keymap kms raid scsi usb virtio squashfs network dhcp"
   tags: ["always"]
 
+
 # squashfs
-- name: export build initrd from remote to local
-  command: mksquashfs modules/ /root/alpine-3.5-modules.squashfs -comp xz
+
+- name: command mksquashfs modules
+  shell: |
+    mksquashfs modules/ /root/alpine-{{version_major_minor}}-modules.squashfs -comp xz
   args:
-    chdir: /lib
+    chdir: '{{chroot_dir}}/lib'
   tags: ["always"]
 
-- name: export build initrd from remote to local
+- name: export modules.squashfs from remote to local
   fetch:
-    src: /root/alpine-3.5-modules.squashfs
-    dest: ../output-pxe-3.5.2/alpine-3.5-modules.squashfs
+    src: '/root/alpine-{{version_major_minor}}-modules.squashfs'
+    dest: '../output-pxe-{{version}}/alpine-{{version_major_minor}}-modules.squashfs'
     flat: true
   tags: ["always"]
+
 
 # initrd
-- name: command mkinitfs /root/alpine-3.5-pxerd
-  command: mkinitfs -o /root/alpine-3.5-pxerd
+
+- name: 'command mkinitfs /root/alpine-{{version_major_minor}}-pxerd'
+  command: 'mkinitfs -b {{chroot_dir}} -o /root/alpine-{{version_major_minor}}-pxerd'
   tags: ["always"]
 
 - name: export build initrd from remote to local
   fetch:
-    src: /root/alpine-3.5-pxerd
-    dest: ../output-pxe-3.5.2/alpine-3.5-pxerd
+    src: '/root/alpine-{{version_major_minor}}-pxerd'
+    dest: '../output-pxe-{{version}}/alpine-{{version_major_minor}}-pxerd'
     flat: true
   tags: ["always"]
 
 
-  
+# apkovl
+
+- name: lbu add home
+  command: 'chroot {{chroot_dir}} lbu add {{item}}'
+  tags: ["always"]
+  with_items: [ "/home", "/usr" ]
+
+- name: lbu pkg
+  command: 'chroot {{chroot_dir}} lbu pkg .'
+  tags: ["always"]
+
+# - name: lbu pkg
+#   command: 'tar -C {{chroot_dir}} -czf /root/alpbox.apkovl.tar.gz usr bin sbin etc home'
+#   tags: ["always"]
+
+- name: export tar system
+  fetch:
+    src: '/root/alpbox.apkovl.tar.gz'
+    dest: '../output-pxe-{{version}}/alpine-{{version_major_minor}}-system.apkovl.tar.gz'
+    flat: true
+  tags: ["always"]
+

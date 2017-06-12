@@ -1,8 +1,8 @@
-[alpine]
+[alpinea]
 127.0.0.1 ansible_ssh_private_key_file=/Users/matt/packer/alpine_ami/.vagrant/machines/default/virtualbox/private_key
 
-[alpinepxe]
-127.0.0.1 ansible_port=4084 host_key_checking=False ansible_ssh_user=admin ansible_ssh_private_key_file=id_rsa_alpine
+[alpine]
+127.0.0.1 ansible_port=2691 host_key_checking=False ansible_ssh_user=admin ansible_ssh_private_key_file=id_rsa_alpine
 
 [defaults]
 host_key_checking=False

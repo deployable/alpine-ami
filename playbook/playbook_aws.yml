@@ -10,5 +10,6 @@
   become: yes
 
   tasks:
+    - include: alpine_vars.yml
     - include: alpine_build.yml
     - include: alpine_build_aws.yml

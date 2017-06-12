@@ -8,10 +8,6 @@
     chroot_dir: '{{path_build}}/target'
   tags: ["always"]
 
-- name: Install build packages with apk in a chrrot
-  tags: ["always"]
-  command: 'chroot {{chroot_dir}} apk add e2fsprogs syslinux parted sudo python tar gzip debootstrap'
-
 - shell: |
     chroot {{chroot_dir}} sh -c 'printf "admin\nadmin\n" | passwd admin'
     chroot {{chroot_dir}} sh -c 'printf "root\nroot\n" | passwd root'

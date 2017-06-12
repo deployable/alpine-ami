@@ -11,7 +11,8 @@
 
   tasks:
 
+    - include: alpine_vars.yml
     - include: alpine_build_pxe.yml
 
-    - name: 'shutdown vbox'
-      command: halt -d 5
+#    - name: 'shutdown vbox'
+#      command: halt -d 5

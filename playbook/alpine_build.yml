@@ -1,84 +1,5 @@
 ---
 
-# Variables you might want to change
-
-- set_fact:
-    version_major: 3
-    version_minor: 5
-    version_patch: 2
-  tags: ["always"]
-
-- set_fact:
-    HTTP_PROXY: 
-  tags: ["always"]
-
-
-# Don't default devices, make the user set them.
-#- set_fact:
-#    dev_alpine: sda
-#    dev_alpine_eventual: sda
-
-
-- set_fact:
-    version: '{{version_major}}.{{version_minor}}.{{version_patch}}'
-    version_major_minor: '{{version_major}}.{{version_minor}}'
-  tags: ["always"]
-
-# Not sure packer runs this like a normal playbook, so defaulting values
-# without using normal ansible precendence. Override these in the 
-# required `playbook_TTTT.yml` file.
-- set_fact:
-
-    # Boot partition is 0 to `dev_alpine_boot_end`
-    dev_alpine_boot_end: "{{ dev_alpine_boot_end | default('64MiB') }}"
-
-    # Root partition is `dev_alpine_boot_end` to `dev_alpine_root_end`
-    dev_alpine_root_end: "{{ dev_alpine_root_end | default('100%') }}"
-
-    # Disable swap on primary drive
-    has_swap: "{{ has_swap | default('false') }}"
-
-    # Swap partition (if enabled) is `dev_alpine_root_end` to `dev_alpine_swap_end`
-    dev_alpine_swap_end: "{{ dev_alpine_swap_end | default('100%') }}"
-
-    # Path to build in
-    path_build: "{{ path_build | default('/tmp') }}"
-
-    # Username to use for build and after
-    user_base: "{{ user_base | default('admin') }}"
-
-    # Hostname for the box
-    hostname: "{{ hostname | default('alpvirt') }}"
-
-    # Load the public key from disk
-    pubkey: "{{ pubkey | default(lookup('file', 'id_rsa_alpine.pub')) }}"
-
-    #file_iso: alpine-standard-{{version}}-x86_64.iso
-  tags: ["always"]
-
-
-# Variables based on the tags (need to be defaulted)
-
-- set_fact:
-    is_aws: false
-    is_vbox: false
-    is_surrogate: false
-  tags: ["always"]
-
-- set_fact:
-    is_aws: true
-  tags: ["aws"]
-
-- set_fact:
-    is_vbox: true
-  tags: ["vbox"]
-
-- set_fact:
-    is_surrogate: true
-  tags: ["surrogate", "aws"]
-
-
-
 # Steps
 
 - name: 'template /etc/apk/repositories etc-apk-repositories.j2'
@@ -161,11 +82,6 @@
     blk_uuid: '{{ blkid_dev.stdout_lines[0] }}'
   tags: ["always"]
 
-# Chroot
-
-- set_fact:
-    chroot_dir: '{{path_build}}/target'
-  tags: ["always"]
 
 # - get_url:    
 #     url: http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/releases/x86_64/alpine-minirootfs-{{version}}-x86_64.tar.gz
@@ -245,25 +161,35 @@
 - name: get apk static for debian
   tags: ["always"]
   get_url:    
-    url: http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/main/x86_64/apk-tools-static-2.6.8-r2.apk
-    dest: '{{ path_build }}/apk-tools-static-2.6.8-r2.tgz'
-  # environment:
-  #   http_proxy: '{{HTTP_PROXY}}'
+    url: http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/main/x86_64/apk-tools-static-2.7.1-r1.apk  
+    dest: '{{ path_build }}/apk-tools-static-2.7.1-r1.tgz'
+  environment:
+    http_proxy: '{{HTTP_PROXY}}'
 
 - name: extract apk static
   tags: ["always"]
   unarchive:
-    src: '{{path_build}}/apk-tools-static-2.6.8-r2.tgz'
+    src: '{{path_build}}/apk-tools-static-2.7.1-r1.tgz'
     dest: '{{path_build}}'
     remote_src: yes
 
+- name: set_fact kernel virtgrsec
+  set_fact:
+    kernel_variant: virtgrsec
+  tags: ["always"]
+
+- name: set_fact kernel vanilla
+  set_fact:
+    kernel_variant: vanilla
+  when: is_pxe
+  tags: ["always"]
+
 - name: Install packages with apk static
   tags: ["always"]
-  command: '{{path_build}}/sbin/apk.static --no-cache -X http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/main -U --allow-untrusted --root {{chroot_dir}} --initdb add alpine-base linux-virtgrsec iproute2 iptables ip6tables iputils e2fsprogs coreutils util-linux syslinux sudo bash openssh dhcpcd curl python'
-  # environment:
-  #   http_proxy: '{{HTTP_PROXY}}'
+  command: '{{path_build}}/sbin/apk.static --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/v{{version_major_minor}}/main --update-cache --allow-untrusted --root {{chroot_dir}} --initdb add alpine-base linux-{{kernel_variant}} iproute2 iptables ip6tables iputils e2fsprogs coreutils util-linux syslinux sudo bash openssh dhcpcd curl tar gzip parted sudo python'
+  environment:
+    http_proxy: '{{HTTP_PROXY}}'
 
-#dropbear dropbear-scp
 
 - name: remove kernel bits
   tags: ["always"]
@@ -342,19 +268,19 @@
     line: rm -f "$urandom_seed""]
 
 # sshd
-- name: Create some dodgy entropy for alpine, cert gen
-  tags: ["always"]
-  lineinfile:
-    dest: '{{chroot_dir}}/etc/init.d/sshd'
-    line: '               find / 2>/dev/null 1>/dev/null'
-    insertbefore: 'ssh-keygen -A \|\| return 1'
+# - name: Create some dodgy entropy for alpine, cert gen
+#   tags: ["always"]
+#   lineinfile:
+#     dest: '{{chroot_dir}}/etc/init.d/sshd'
+#     line: '               find / 2>/dev/null 1>/dev/null'
+#     insertbefore: 'ssh-keygen -A \|\| return 1'
 
-- name: Create some dodgy entropy for alpine, ssh startup
-  tags: ["always"]
-  lineinfile:
-    dest: '{{chroot_dir}}/etc/init.d/sshd'
-    line: '        if [ "${RC_CMD}" = "start" ] ; then find / 2>/dev/null 1>/dev/null; fi'
-    insertbefore: 'SSHD_BINARY\}" -t '
+# - name: Create some dodgy entropy for alpine, ssh startup
+#   tags: ["always"]
+#   lineinfile:
+#     dest: '{{chroot_dir}}/etc/init.d/sshd'
+#     line: '        if [ "${RC_CMD}" = "start" ] ; then find / 2>/dev/null 1>/dev/null; fi'
+#     insertbefore: 'SSHD_BINARY\}" -t '
 
 - lineinfile:
     dest: '{{chroot_dir}}/etc/ssh/sshd_config'

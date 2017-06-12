@@ -1,0 +1,89 @@
+---
+# Variables you might want to change
+
+- set_fact:
+    version_major: 3
+    version_minor: 6
+    version_patch: 1
+  tags: ["always"]
+
+- set_fact:
+    HTTP_PROXY: 'http://10.8.8.8:3142'
+  tags: ["always"]
+
+
+# Don't default devices, make the user set them.
+#- set_fact:
+#    dev_alpine: sda
+#    dev_alpine_eventual: sda
+
+
+- set_fact:
+    version: '{{version_major}}.{{version_minor}}.{{version_patch}}'
+    version_major_minor: '{{version_major}}.{{version_minor}}'
+  tags: ["always"]
+
+# Not sure packer runs this like a normal playbook, so defaulting values
+# without using normal ansible precendence. Override these in the 
+# required `playbook_TTTT.yml` file.
+- set_fact:
+
+    # Boot partition is 0 to `dev_alpine_boot_end`
+    dev_alpine_boot_end: "{{ dev_alpine_boot_end | default('64MiB') }}"
+
+    # Root partition is `dev_alpine_boot_end` to `dev_alpine_root_end`
+    dev_alpine_root_end: "{{ dev_alpine_root_end | default('100%') }}"
+
+    # Disable swap on primary drive
+    has_swap: "{{ has_swap | default('false') }}"
+
+    # Swap partition (if enabled) is `dev_alpine_root_end` to `dev_alpine_swap_end`
+    dev_alpine_swap_end: "{{ dev_alpine_swap_end | default('100%') }}"
+
+    # Path to build in
+    path_build: "{{ path_build | default('/tmp') }}"
+
+    # Username to use for build and after
+    user_base: "{{ user_base | default('admin') }}"
+
+    # Hostname for the box
+    hostname: "{{ hostname | default('alpvirt') }}"
+
+    # Load the public key from disk
+    pubkey: "{{ pubkey | default(lookup('file', 'id_rsa_alpine.pub')) }}"
+
+    #file_iso: alpine-standard-{{version}}-x86_64.iso
+  tags: ["always"]
+
+
+# Chroot
+
+- set_fact:
+    chroot_dir: '{{path_build}}/target'
+  tags: ["always"]
+
+  
+# Variables based on the tags (need to be defaulted)
+
+- set_fact:
+    is_aws: false
+    is_vbox: false
+    is_pxe: false
+    is_surrogate: false
+  tags: ["always"]
+
+- set_fact:
+    is_aws: true
+  tags: ["aws"]
+
+- set_fact:
+    is_vbox: true
+  tags: ["vbox"]
+
+- set_fact:
+    is_pxe: true
+  tags: ["pxe"]
+
+- set_fact:
+    is_surrogate: true
+  tags: ["surrogate", "aws"]

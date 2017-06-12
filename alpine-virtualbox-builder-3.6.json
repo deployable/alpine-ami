@@ -1,0 +1,60 @@
+{
+  "builders": [{
+    "type"         : "virtualbox-iso",
+    "guest_os_type": "Linux26_64",
+    "disk_size"    : "2000",
+
+    "vm_name": "alpine-vbox-builder-3.6.1",
+
+    "iso_url"      : "http://dl-cdn.alpinelinux.org/alpine/v3.6/releases/x86_64/alpine-vanilla-3.6.1-x86_64.iso",
+    "iso_checksum_type": "sha256",
+    "iso_checksum" : "a12d80e3fad54193376772824b91794b41678e5481baebae3532104a096bff1d",
+
+    "boot_wait": "15s",
+    "boot_command": [
+      "<enter>",
+      "<wait10>",
+      "root<enter>",
+      "/sbin/setup-interfaces<enter>",
+      "<enter>",
+      "dhcp<enter>",
+      "no<enter>",
+      "/etc/init.d/networking start<enter>",
+      "echo http://dl-cdn.alpinelinux.org/alpine/v3.6/main > /etc/apk/repositories<enter>",
+      "apk update<enter>",
+      "apk add openssh sudo python tar gzip<enter>",
+      "<wait10>",
+      "adduser -D -h /home/admin admin<enter>",
+      "echo 'admin<enter>admin' | passwd admin<enter>",
+      "echo 'admin ALL = NOPASSWD: ALL' >> /etc/sudoers<enter>",
+      "/etc/init.d/sshd start<enter>",
+      "netstat -anp | grep ssh<enter>",
+      "su - admin -c 'sudo echo test'<enter>",
+      "<wait5>"
+    ],
+
+    "ssh_username" : "admin",
+    "ssh_password" : "admin",
+
+    "shutdown_command" : "sudo halt",
+
+    "output_directory": "output-builder-3.6.1",
+
+    "export_opts": [
+      "--manifest",
+      "--vsys", "0",
+      "--description", "Alpine Linux 3.6.1 Builder",
+      "--version", "3.6.1-{{user `vm_version`}}"
+    ]
+
+  }],
+  "provisioners": [
+    {
+      "type": "ansible",
+      "playbook_file": "./playbook/playbook_vbox_builder.yml",
+      "groups": "alpine",
+      "extra_arguments": [ "-vv", "--tags=pxe,vbox" ]
+    }
+  ]
+}
+

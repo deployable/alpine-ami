@@ -11,13 +11,11 @@
 
   tasks:
 
+    - include: alpine_vars.yml
     - include: alpine_build.yml
-
     - include: alpine_build_vagrant.yml
 
     - command: sync
       tags: ['always']
-    - command: sleep 5
-      tags: ['always']
-    - command: halt
+    - command: halt -d 1
       tags: ['always']

@@ -77,10 +77,19 @@ get_ami_from_region(){
 build_virtualbox_builder(){
   build_sshkeys_conditional
   set +e
-  pkill -f 'packer build alpine-virtualbox-builder.json'
+  pkill -f 'packer build alpine-virtualbox-builder-3.6.json'
   rm -rf output-builder/
   set -e
-  packer build $PACKER_ARGS alpine-virtualbox-builder.json
+  packer build -force $PACKER_ARGS alpine-virtualbox-builder-3.6.json
+}
+
+build_virtualbox_builder_pxe(){
+  build_sshkeys_conditional
+  set +e
+  pkill -f 'packer build alpine-virtualbox-builder-3.6.json'
+  rm -rf output-builder/
+  set -e
+  packer build -force $PACKER_ARGS alpine-virtualbox-builder-3.6.json
 }
 
 # Build a virtualbox .ovf from iso
@@ -107,15 +116,15 @@ build_vagrant(){
 
 # Build a pxe initrd frome the virtualbox builder ovf.
 build_pxe(){
-  if [ ! -f ./output-builder-3.5.2/alpine-vbox-builder-3.5.2.ovf ]; then
+  if [ ! -f ./output-builder-3.6.1/alpine-vbox-builder-3.6.1.ovf ]; then
     echo "need to run 'build_virtualbox_builder'"
     return 1
   fi
   build_sshkeys_conditional
   set +e
-  pkill -f 'packer build alpine-pxe.json'
+  pkill -f 'packer build alpine-pxe-3.6.json'
   set -e
-  packer build -force $PACKER_ARGS alpine-pxe.json
+  packer build -force $PACKER_ARGS alpine-pxe-3.6.json
 }
 
 
@@ -150,6 +159,10 @@ build_sshkeys(){
   ssh-keygen -f "$rundir"/playbook/id_rsa_alpine -t rsa -b 3072 -N ''
 }
 
+build_clean(){
+  cd "$rundir"/
+  rm -rf output-*
+}
 
 # ## Run
 
@@ -238,6 +251,7 @@ run_help(){
 case $cmd in
   'build'|'aws')  build_ami "$@";;
   'builder')      build_virtualbox_builder "$@";;
+  'clean')        build_clean "$@";;
   'vbox')         build_virtualbox "$@";;
   'virtualbox')   build_virtualbox "$@";;
   'vagrant')      build_vagrant "$@";;
