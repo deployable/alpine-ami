@@ -1,6 +1,6 @@
 # Alpine Linux AMI Build
 
-Build an [Alpine Linux](https://www.alpinelinux.org) EC2 AMI, VM OVA or PXE initrd
+Build an [Alpine Linux](https://www.alpinelinux.org) EC2 AMI, Virtualbox OVF or PXE initrd
 with [Packer](https://www.packer.io) and [Ansible](https://www.ansible.com).
 
 
